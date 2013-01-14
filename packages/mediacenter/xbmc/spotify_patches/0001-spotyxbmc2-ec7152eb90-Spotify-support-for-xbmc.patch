@@ -1,7 +1,7 @@
-From 527e8e244ad0bde86fd50701eb9cc248ed3eb33e Mon Sep 17 00:00:00 2001
-From: Tompen <tompen@tompen.serveftp.com>
-Date: Sun, 21 Oct 2012 02:28:28 +0200
-Subject: [PATCH] spotyxbmc2-UNTESTED-Spotify-support-for-xbmc-frodo-f13566bc
+From 9ae5810b0f39896e2f9197c83d9c28a90420154e Mon Sep 17 00:00:00 2001
+From: Samuel Cabrero <scabrero@zentyal.com>
+Date: Mon, 14 Jan 2013 00:45:42 +0100
+Subject: [PATCH] spotyxbmc2-ec7152eb90-Spotify-support-for-xbmc
 
 ---
  .gitignore                                         |    2 +-
@@ -18,12 +18,24 @@ Subject: [PATCH] spotyxbmc2-UNTESTED-Spotify-support-for-xbmc-frodo-f13566bc
  lib/libspotify/api.h                               | 3577 ++++++++++++++++++++
  lib/libspotify/include/libspotify/api.h            | 3577 ++++++++++++++++++++
  lib/libspotify/libspotify.lib                      |  Bin 0 -> 57942 bytes
- xbmc/Application.cpp                               |   10 +
+ xbmc/Application.cpp                               |   24 +-
  xbmc/FileItem.cpp                                  |   10 +
  xbmc/FileItem.h                                    |    1 +
  xbmc/GUIInfoManager.cpp                            |    4 +-
- xbmc/cores/paplayer/CodecFactory.cpp               |    6 +
+ .../dvdplayer/DVDDemuxers/DVDDemuxSpotify.cpp      |  180 +
+ xbmc/cores/dvdplayer/DVDDemuxers/DVDDemuxSpotify.h |   47 +
+ .../dvdplayer/DVDDemuxers/DVDFactoryDemuxer.cpp    |   10 +
+ xbmc/cores/dvdplayer/DVDDemuxers/Makefile.in       |    1 +
+ .../DVDInputStreams/DVDFactoryInputStream.cpp      |    4 +
+ .../dvdplayer/DVDInputStreams/DVDInputStream.h     |    1 +
+ .../DVDInputStreams/DVDInputStreamSpotify.cpp      |  232 ++
+ .../DVDInputStreams/DVDInputStreamSpotify.h        |   59 +
+ xbmc/cores/dvdplayer/DVDInputStreams/Makefile      |    1 +
+ xbmc/cores/paplayer/CodecFactory.cpp               |    5 +
+ xbmc/cores/paplayer/Makefile.in                    |    1 +
  xbmc/cores/paplayer/PAPlayer.cpp                   |   58 +-
+ xbmc/cores/paplayer/SpotifyCodec.cpp               |  247 ++
+ xbmc/cores/paplayer/SpotifyCodec.h                 |   58 +
  xbmc/dialogs/GUIDialogContextMenu.h                |    7 +-
  .../MusicDatabaseDirectory/DirectoryNodeAlbum.cpp  |    8 +
  .../MusicDatabaseDirectory/DirectoryNodeArtist.cpp |    8 +
@@ -32,7 +44,7 @@ Subject: [PATCH] spotyxbmc2-UNTESTED-Spotify-support-for-xbmc-frodo-f13566bc
  .../MusicDatabaseDirectory/DirectoryNodeTop100.cpp |    6 +
  xbmc/filesystem/MusicSearchDirectory.cpp           |    6 +-
  xbmc/music/Makefile                                |   33 +-
- xbmc/music/spotyXBMC/Addon.music.spotify.cpp       |  762 +++++
+ xbmc/music/spotyXBMC/Addon.music.spotify.cpp       |  760 +++++
  xbmc/music/spotyXBMC/Addon.music.spotify.h         |   84 +
  xbmc/music/spotyXBMC/Logger.cpp                    |   36 +
  xbmc/music/spotyXBMC/Logger.h                      |   92 +
@@ -52,10 +64,10 @@ Subject: [PATCH] spotyxbmc2-UNTESTED-Spotify-support-for-xbmc-frodo-f13566bc
  xbmc/music/spotyXBMC/artist/ArtistStore.h          |   57 +
  xbmc/music/spotyXBMC/artist/SxArtist.cpp           |  233 ++
  xbmc/music/spotyXBMC/artist/SxArtist.h             |  161 +
- xbmc/music/spotyXBMC/player/Codec.cpp              |  241 ++
- xbmc/music/spotyXBMC/player/Codec.h                |   63 +
- xbmc/music/spotyXBMC/player/PlayerHandler.cpp      |   81 +
- xbmc/music/spotyXBMC/player/PlayerHandler.h        |   60 +
+ xbmc/music/spotyXBMC/player/ISpotifyPlayer.cpp     |   27 +
+ xbmc/music/spotyXBMC/player/ISpotifyPlayer.h       |   33 +
+ xbmc/music/spotyXBMC/player/PlayerHandler.cpp      |   78 +
+ xbmc/music/spotyXBMC/player/PlayerHandler.h        |   53 +
  xbmc/music/spotyXBMC/playlist/PlaylistStore.cpp    |  188 +
  xbmc/music/spotyXBMC/playlist/PlaylistStore.h      |   85 +
  .../spotyXBMC/playlist/StarredBackgroundLoader.cpp |  179 +
@@ -97,7 +109,7 @@ Subject: [PATCH] spotyxbmc2-UNTESTED-Spotify-support-for-xbmc-frodo-f13566bc
  xbmc/music/windows/GUIWindowMusicBase.cpp          |    8 +
  xbmc/music/windows/GUIWindowMusicNav.cpp           |   54 +-
  xbmc/settings/Settings.cpp                         |    2 +-
- 104 files changed, 15328 insertions(+), 47 deletions(-)
+ 105 files changed, 15555 insertions(+), 18 deletions(-)
  create mode 100644 Readme.md
  create mode 100644 addons/plugin.music.spotyXBMC/addon.xml
  create mode 100644 addons/plugin.music.spotyXBMC/changelog.txt
@@ -107,9 +119,15 @@ Subject: [PATCH] spotyxbmc2-UNTESTED-Spotify-support-for-xbmc-frodo-f13566bc
  create mode 100644 addons/plugin.music.spotyXBMC/resources/language/English/strings.xml
  create mode 100644 addons/plugin.music.spotyXBMC/resources/language/French/strings.xml
  create mode 100644 addons/plugin.music.spotyXBMC/resources/settings.xml
- create mode 100644 lib/libspotify/api.h
+ create mode 100755 lib/libspotify/api.h
  create mode 100644 lib/libspotify/include/libspotify/api.h
  create mode 100644 lib/libspotify/libspotify.lib
+ create mode 100644 xbmc/cores/dvdplayer/DVDDemuxers/DVDDemuxSpotify.cpp
+ create mode 100644 xbmc/cores/dvdplayer/DVDDemuxers/DVDDemuxSpotify.h
+ create mode 100644 xbmc/cores/dvdplayer/DVDInputStreams/DVDInputStreamSpotify.cpp
+ create mode 100644 xbmc/cores/dvdplayer/DVDInputStreams/DVDInputStreamSpotify.h
+ create mode 100644 xbmc/cores/paplayer/SpotifyCodec.cpp
+ create mode 100644 xbmc/cores/paplayer/SpotifyCodec.h
  create mode 100644 xbmc/music/spotyXBMC/Addon.music.spotify.cpp
  create mode 100644 xbmc/music/spotyXBMC/Addon.music.spotify.h
  create mode 100644 xbmc/music/spotyXBMC/Logger.cpp
@@ -130,8 +148,8 @@ Subject: [PATCH] spotyxbmc2-UNTESTED-Spotify-support-for-xbmc-frodo-f13566bc
  create mode 100644 xbmc/music/spotyXBMC/artist/ArtistStore.h
  create mode 100644 xbmc/music/spotyXBMC/artist/SxArtist.cpp
  create mode 100644 xbmc/music/spotyXBMC/artist/SxArtist.h
- create mode 100644 xbmc/music/spotyXBMC/player/Codec.cpp
- create mode 100644 xbmc/music/spotyXBMC/player/Codec.h
+ create mode 100644 xbmc/music/spotyXBMC/player/ISpotifyPlayer.cpp
+ create mode 100644 xbmc/music/spotyXBMC/player/ISpotifyPlayer.h
  create mode 100644 xbmc/music/spotyXBMC/player/PlayerHandler.cpp
  create mode 100644 xbmc/music/spotyXBMC/player/PlayerHandler.h
  create mode 100644 xbmc/music/spotyXBMC/playlist/PlaylistStore.cpp
@@ -174,7 +192,7 @@ Subject: [PATCH] spotyxbmc2-UNTESTED-Spotify-support-for-xbmc-frodo-f13566bc
  create mode 100644 xbmc/music/spotyXBMC/track/TrackStore.h
 
 diff --git a/.gitignore b/.gitignore
-index da4354f..5a843aa 100644
+index 9b4f7f0..8555e6a 100644
 --- a/.gitignore
 +++ b/.gitignore
 @@ -1,5 +1,6 @@
@@ -184,9 +202,9 @@ index da4354f..5a843aa 100644
  
  # commonly used editors
  # vim
-@@ -364,7 +365,6 @@ lib/cmyth/Makefile
- /project/Win32BuildSetup/XBMCSetup*.exe
+@@ -365,7 +366,6 @@ lib/cmyth/Makefile
  /project/Win32BuildSetup/languages.nsi
+ /project/Win32BuildSetup/xbmc-pvr-addons.nsi
  /project/Win32BuildSetup/BUILD_WIN32/
 -/project/Win32BuildSetup/dependencies
  
@@ -6237,10 +6255,10 @@ index 0000000..50c7859
 +</category>
 +</settings>
 diff --git a/configure.in b/configure.in
-index ef5c116..d08a36b 100644
+index cf84ebb..de52cf4 100644
 --- a/configure.in
 +++ b/configure.in
-@@ -1656,6 +1656,9 @@ else
+@@ -1682,6 +1682,9 @@ else
    AC_MSG_NOTICE($vdpau_disabled)
  fi
  
@@ -6251,8 +6269,8 @@ index ef5c116..d08a36b 100644
  if test "x$use_vaapi" != "xno"; then
    if test "$host_vendor" = "apple" ; then
 diff --git a/lib/libspotify/api.h b/lib/libspotify/api.h
-new file mode 100644
-index 0000000..1384845
+new file mode 100755
+index 0000000..052fc62
 --- /dev/null
 +++ b/lib/libspotify/api.h
 @@ -0,0 +1,3577 @@
@@ -6316,7 +6334,7 @@ index 0000000..1384845
 +typedef unsigned char bool;
 +#endif
 +
-+typedef unsigned char byte;
++typedef unsigned char s_byte;
 +
 +/**
 + * @defgroup types Spotify types & structs
@@ -6571,14 +6589,14 @@ index 0000000..1384845
 +	 */
 +	int queued_tracks;
 +	sp_uint64 queued_bytes;
-+	
++
 +	/**
 +	 * Done tracks/bytes is things marked for sync that existed on
 +	 * device before current sync operation
 +	 */
 +	int done_tracks;
 +	sp_uint64 done_bytes;
-+	
++
 +	/**
 +	 * Copied tracks/bytes is things that has been copied in
 +	 * current sync operation
@@ -6855,7 +6873,7 @@ index 0000000..1384845
 +	bool dont_save_metadata_for_playlists;
 +
 +	/**
-+	 * Avoid loading playlists into RAM on startup. 
++	 * Avoid loading playlists into RAM on startup.
 +	 * See sp_playlist_is_in_ram() for more details.
 +	 */
 +	bool initially_unload_playlists;
@@ -7031,7 +7049,7 @@ index 0000000..1384845
 + *                         SP_ERROR_MISSING_CALLBACK
 + *                         SP_ERROR_RESOURCE_NOT_LOADED
 + *                         SP_ERROR_TRACK_NOT_PLAYABLE
-+ * 
++ *
 + */
 +SP_LIBEXPORT(sp_error) sp_session_player_load(sp_session *session, sp_track *track);
 +
@@ -7129,7 +7147,7 @@ index 0000000..1384845
 + * Return the published container for a given @a canonical_username,
 + * or the currently logged in user if @a canonical_username is NULL.
 + *
-+ * When done with the list you should call sp_playlistconatiner_release() to 
++ * When done with the list you should call sp_playlistconatiner_release() to
 + * decrese the reference you own by having created it.
 + *
 + * @param[in]   session    Your session object.
@@ -7165,7 +7183,7 @@ index 0000000..1384845
 + * Return status of volume normalization
 + *
 + * @param[in]  session        Session object
-+ * 
++ *
 + * @return true iff volume normalization is enabled
 + *
 + */
@@ -7286,7 +7304,7 @@ index 0000000..1384845
 +	SP_LINKTYPE_PLAYLIST = 5, ///< Link type is playlist
 +	SP_LINKTYPE_PROFILE  = 6, ///< Link type is profile
 +	SP_LINKTYPE_STARRED  = 7, ///< Link type is starred
-+	SP_LINKTYPE_LOCALTRACK  = 8, ///< Link type is a local file	
++	SP_LINKTYPE_LOCALTRACK  = 8, ///< Link type is a local file
 +	SP_LINKTYPE_IMAGE = 9, ///< Link type is an image
 +} sp_linktype;
 +
@@ -7827,7 +7845,7 @@ index 0000000..1384845
 + *
 + * @see sp_image_create
 + */
-+SP_LIBEXPORT(const byte *) sp_album_cover(sp_album *album);
++SP_LIBEXPORT(const s_byte *) sp_album_cover(sp_album *album);
 +
 +/**
 + * Return name of album
@@ -7914,7 +7932,7 @@ index 0000000..1384845
 + *                         loaded yet, this function returns NULL.
 + *
 + */
-+SP_LIBEXPORT(const byte *) sp_artist_portrait(sp_artist *artist);
++SP_LIBEXPORT(const s_byte *) sp_artist_portrait(sp_artist *artist);
 +
 +/**
 + * Increase the reference count of a artist
@@ -8183,7 +8201,7 @@ index 0000000..1384845
 + *
 + * @see sp_image_create
 + */
-+SP_LIBEXPORT(const byte *) sp_artistbrowse_portrait(sp_artistbrowse *arb, int index);
++SP_LIBEXPORT(const s_byte *) sp_artistbrowse_portrait(sp_artistbrowse *arb, int index);
 +
 +/**
 + * Given an artist browse object, return number of tracks
@@ -8320,7 +8338,7 @@ index 0000000..1384845
 + * @see sp_album_cover
 + * @see sp_artistbrowse_portrait
 + */
-+SP_LIBEXPORT(sp_image *) sp_image_create(sp_session *session, const byte image_id[20]);
++SP_LIBEXPORT(sp_image *) sp_image_create(sp_session *session, const s_byte image_id[20]);
 +
 +/**
 + * Create an image object from a link
@@ -8410,7 +8428,7 @@ index 0000000..1384845
 + *
 + * @return                Image ID
 + */
-+SP_LIBEXPORT(const byte *) sp_image_image_id(sp_image *image);
++SP_LIBEXPORT(const s_byte *) sp_image_image_id(sp_image *image);
 +
 +
 +/**
@@ -8789,7 +8807,7 @@ index 0000000..1384845
 +	 * @param[in]  image      New image
 +	 * @param[in]  userdata   Userdata passed to sp_playlist_add_callbacks()
 +	 */
-+	void (SP_CALLCONV *image_changed)(sp_playlist *pl, const byte *image, void *userdata);
++	void (SP_CALLCONV *image_changed)(sp_playlist *pl, const s_byte *image, void *userdata);
 +
 +
 +	/**
@@ -9015,7 +9033,7 @@ index 0000000..1384845
 + * @return                    TRUE if playlist has an image, FALSE if not
 + *
 + */
-+SP_LIBEXPORT(bool) sp_playlist_get_image(sp_playlist *playlist, byte image[20]);
++SP_LIBEXPORT(bool) sp_playlist_get_image(sp_playlist *playlist, s_byte image[20]);
 +
 +
 +/**
@@ -9462,7 +9480,7 @@ index 0000000..1384845
 + * Return a pointer to the user object of the owner.
 + *
 + * @param[in]  pc   Playlist container.
-+ * @return          The user object or NULL if unknown or none.     
++ * @return          The user object or NULL if unknown or none.
 + */
 +SP_LIBEXPORT(sp_user *) sp_playlistcontainer_owner(sp_playlistcontainer *pc);
 +
@@ -9747,7 +9765,7 @@ index 0000000..1384845
 +typedef void SP_CALLCONV inboxpost_complete_cb(sp_inbox *result, void *userdata);
 +
 +/**
-+ * Add to inbox 
++ * Add to inbox
 + *
 + * @param[in]  session    Session object
 + * @param[in]  user       Canonical username of recipient
@@ -9835,7 +9853,7 @@ index 0000000..1384845
 + */
 diff --git a/lib/libspotify/include/libspotify/api.h b/lib/libspotify/include/libspotify/api.h
 new file mode 100644
-index 0000000..1384845
+index 0000000..052fc62
 --- /dev/null
 +++ b/lib/libspotify/include/libspotify/api.h
 @@ -0,0 +1,3577 @@
@@ -9899,7 +9917,7 @@ index 0000000..1384845
 +typedef unsigned char bool;
 +#endif
 +
-+typedef unsigned char byte;
++typedef unsigned char s_byte;
 +
 +/**
 + * @defgroup types Spotify types & structs
@@ -10154,14 +10172,14 @@ index 0000000..1384845
 +	 */
 +	int queued_tracks;
 +	sp_uint64 queued_bytes;
-+	
++
 +	/**
 +	 * Done tracks/bytes is things marked for sync that existed on
 +	 * device before current sync operation
 +	 */
 +	int done_tracks;
 +	sp_uint64 done_bytes;
-+	
++
 +	/**
 +	 * Copied tracks/bytes is things that has been copied in
 +	 * current sync operation
@@ -10438,7 +10456,7 @@ index 0000000..1384845
 +	bool dont_save_metadata_for_playlists;
 +
 +	/**
-+	 * Avoid loading playlists into RAM on startup. 
++	 * Avoid loading playlists into RAM on startup.
 +	 * See sp_playlist_is_in_ram() for more details.
 +	 */
 +	bool initially_unload_playlists;
@@ -10614,7 +10632,7 @@ index 0000000..1384845
 + *                         SP_ERROR_MISSING_CALLBACK
 + *                         SP_ERROR_RESOURCE_NOT_LOADED
 + *                         SP_ERROR_TRACK_NOT_PLAYABLE
-+ * 
++ *
 + */
 +SP_LIBEXPORT(sp_error) sp_session_player_load(sp_session *session, sp_track *track);
 +
@@ -10712,7 +10730,7 @@ index 0000000..1384845
 + * Return the published container for a given @a canonical_username,
 + * or the currently logged in user if @a canonical_username is NULL.
 + *
-+ * When done with the list you should call sp_playlistconatiner_release() to 
++ * When done with the list you should call sp_playlistconatiner_release() to
 + * decrese the reference you own by having created it.
 + *
 + * @param[in]   session    Your session object.
@@ -10748,7 +10766,7 @@ index 0000000..1384845
 + * Return status of volume normalization
 + *
 + * @param[in]  session        Session object
-+ * 
++ *
 + * @return true iff volume normalization is enabled
 + *
 + */
@@ -10869,7 +10887,7 @@ index 0000000..1384845
 +	SP_LINKTYPE_PLAYLIST = 5, ///< Link type is playlist
 +	SP_LINKTYPE_PROFILE  = 6, ///< Link type is profile
 +	SP_LINKTYPE_STARRED  = 7, ///< Link type is starred
-+	SP_LINKTYPE_LOCALTRACK  = 8, ///< Link type is a local file	
++	SP_LINKTYPE_LOCALTRACK  = 8, ///< Link type is a local file
 +	SP_LINKTYPE_IMAGE = 9, ///< Link type is an image
 +} sp_linktype;
 +
@@ -11410,7 +11428,7 @@ index 0000000..1384845
 + *
 + * @see sp_image_create
 + */
-+SP_LIBEXPORT(const byte *) sp_album_cover(sp_album *album);
++SP_LIBEXPORT(const s_byte *) sp_album_cover(sp_album *album);
 +
 +/**
 + * Return name of album
@@ -11497,7 +11515,7 @@ index 0000000..1384845
 + *                         loaded yet, this function returns NULL.
 + *
 + */
-+SP_LIBEXPORT(const byte *) sp_artist_portrait(sp_artist *artist);
++SP_LIBEXPORT(const s_byte *) sp_artist_portrait(sp_artist *artist);
 +
 +/**
 + * Increase the reference count of a artist
@@ -11766,7 +11784,7 @@ index 0000000..1384845
 + *
 + * @see sp_image_create
 + */
-+SP_LIBEXPORT(const byte *) sp_artistbrowse_portrait(sp_artistbrowse *arb, int index);
++SP_LIBEXPORT(const s_byte *) sp_artistbrowse_portrait(sp_artistbrowse *arb, int index);
 +
 +/**
 + * Given an artist browse object, return number of tracks
@@ -11903,7 +11921,7 @@ index 0000000..1384845
 + * @see sp_album_cover
 + * @see sp_artistbrowse_portrait
 + */
-+SP_LIBEXPORT(sp_image *) sp_image_create(sp_session *session, const byte image_id[20]);
++SP_LIBEXPORT(sp_image *) sp_image_create(sp_session *session, const s_byte image_id[20]);
 +
 +/**
 + * Create an image object from a link
@@ -11993,7 +12011,7 @@ index 0000000..1384845
 + *
 + * @return                Image ID
 + */
-+SP_LIBEXPORT(const byte *) sp_image_image_id(sp_image *image);
++SP_LIBEXPORT(const s_byte *) sp_image_image_id(sp_image *image);
 +
 +
 +/**
@@ -12372,7 +12390,7 @@ index 0000000..1384845
 +	 * @param[in]  image      New image
 +	 * @param[in]  userdata   Userdata passed to sp_playlist_add_callbacks()
 +	 */
-+	void (SP_CALLCONV *image_changed)(sp_playlist *pl, const byte *image, void *userdata);
++	void (SP_CALLCONV *image_changed)(sp_playlist *pl, const s_byte *image, void *userdata);
 +
 +
 +	/**
@@ -12598,7 +12616,7 @@ index 0000000..1384845
 + * @return                    TRUE if playlist has an image, FALSE if not
 + *
 + */
-+SP_LIBEXPORT(bool) sp_playlist_get_image(sp_playlist *playlist, byte image[20]);
++SP_LIBEXPORT(bool) sp_playlist_get_image(sp_playlist *playlist, s_byte image[20]);
 +
 +
 +/**
@@ -13045,7 +13063,7 @@ index 0000000..1384845
 + * Return a pointer to the user object of the owner.
 + *
 + * @param[in]  pc   Playlist container.
-+ * @return          The user object or NULL if unknown or none.     
++ * @return          The user object or NULL if unknown or none.
 + */
 +SP_LIBEXPORT(sp_user *) sp_playlistcontainer_owner(sp_playlistcontainer *pc);
 +
@@ -13330,7 +13348,7 @@ index 0000000..1384845
 +typedef void SP_CALLCONV inboxpost_complete_cb(sp_inbox *result, void *userdata);
 +
 +/**
-+ * Add to inbox 
++ * Add to inbox
 + *
 + * @param[in]  session    Session object
 + * @param[in]  user       Canonical username of recipient
@@ -13626,7 +13644,7 @@ literal 0
 HcmV?d00001
 
 diff --git a/xbmc/Application.cpp b/xbmc/Application.cpp
-index f85326e..2a972d3 100644
+index 2193cfe..7803d7f 100644
 --- a/xbmc/Application.cpp
 +++ b/xbmc/Application.cpp
 @@ -18,6 +18,9 @@
@@ -13639,7 +13657,16 @@ index f85326e..2a972d3 100644
  #include "network/Network.h"
  #include "threads/SystemClock.h"
  #include "system.h"
-@@ -1381,6 +1384,9 @@ bool CApplication::Initialize()
+@@ -1293,7 +1296,7 @@ bool CApplication::Initialize()
+ 
+     g_windowManager.Add(new CGUIDialogPeripheralManager);
+     g_windowManager.Add(new CGUIDialogPeripheralSettings);
+-    
++
+     g_windowManager.Add(new CGUIDialogMediaFilter);
+ 
+     g_windowManager.Add(new CGUIWindowMusicPlayList);
+@@ -1384,6 +1387,9 @@ bool CApplication::Initialize()
      ADDON::CAddonMgr::Get().StartServices(false);
    }
  
@@ -13649,7 +13676,27 @@ index f85326e..2a972d3 100644
    g_sysinfo.Refresh();
  
    CLog::Log(LOGINFO, "removing tempfiles");
-@@ -3431,6 +3437,10 @@ bool CApplication::Cleanup()
+@@ -1881,16 +1887,16 @@ void CApplication::ReloadSkin()
+   m_skinReloading = false;
+   CGUIMessage msg(GUI_MSG_LOAD_SKIN, -1, g_windowManager.GetActiveWindow());
+   g_windowManager.SendMessage(msg);
+-  
++
+   // Reload the skin, restoring the previously focused control.  We need this as
+   // the window unload will reset all control states.
+   int iCtrlID = -1;
+   CGUIWindow* pWindow = g_windowManager.GetWindow(g_windowManager.GetActiveWindow());
+   if (pWindow)
+     iCtrlID = pWindow->GetFocusedControlID();
+-  
++
+   g_application.LoadSkin(g_guiSettings.GetString("lookandfeel.skin"));
+- 
++
+   if (iCtrlID != -1)
+   {
+     pWindow = g_windowManager.GetWindow(g_windowManager.GetActiveWindow());
+@@ -3328,6 +3334,10 @@ bool CApplication::Cleanup()
  {
    try
    {
@@ -13660,11 +13707,38 @@ index f85326e..2a972d3 100644
      g_windowManager.Delete(WINDOW_MUSIC_PLAYLIST);
      g_windowManager.Delete(WINDOW_MUSIC_PLAYLIST_EDITOR);
      g_windowManager.Delete(WINDOW_MUSIC_FILES);
+@@ -3474,7 +3484,7 @@ bool CApplication::Cleanup()
+ #ifdef HAS_DVD_DRIVE
+     CLibcdio::ReleaseInstance();
+ #endif
+-#endif 
++#endif
+ #if defined(TARGET_ANDROID)
+     // enable for all platforms once it's safe
+     g_sectionLoader.UnloadAll();
+@@ -4080,7 +4090,7 @@ bool CApplication::PlayFile(const CFileItem& item, bool bRestart)
+     if ( !(m_eCurrentPlayer == eNewCore && (m_eCurrentPlayer == EPC_DVDPLAYER || m_eCurrentPlayer  == EPC_PAPLAYER
+ #if defined(HAS_OMXPLAYER)
+             || m_eCurrentPlayer == EPC_OMXPLAYER
+-#endif            
++#endif
+             )) )
+     {
+       delete m_pPlayer;
+@@ -4815,7 +4825,7 @@ bool CApplication::OnMessage(CGUIMessage& message)
+ 
+       // Update our infoManager with the new details etc.
+       if (m_nextPlaylistItem >= 0)
+-      { 
++      {
+         // playing an item which is not in the list - player might be stopped already
+         // so do nothing
+         if (playList.size() <= m_nextPlaylistItem)
 diff --git a/xbmc/FileItem.cpp b/xbmc/FileItem.cpp
-index f36d1ce..5aea48d 100644
+index 2b69129..1d49490 100644
 --- a/xbmc/FileItem.cpp
 +++ b/xbmc/FileItem.cpp
-@@ -1196,6 +1196,16 @@ bool CFileItem::IsRemovable() const
+@@ -1179,6 +1179,16 @@ bool CFileItem::IsRemovable() const
    return IsOnDVD() || IsCDDA() || m_iDriveType == CMediaSource::SOURCE_TYPE_REMOVABLE;
  }
  
@@ -13682,7 +13756,7 @@ index f36d1ce..5aea48d 100644
  {
    if (IsParentFolder()) return true;
 diff --git a/xbmc/FileItem.h b/xbmc/FileItem.h
-index 3b023f2..45e3508 100644
+index c51a73f..dd3cb15 100644
 --- a/xbmc/FileItem.h
 +++ b/xbmc/FileItem.h
 @@ -158,6 +158,7 @@ public:
@@ -13694,10 +13768,10 @@ index 3b023f2..45e3508 100644
    bool IsMythTV() const;
    bool IsHDHomeRun() const;
 diff --git a/xbmc/GUIInfoManager.cpp b/xbmc/GUIInfoManager.cpp
-index f137f32..0bbaa95 100644
+index a4098e0..c79bbbe 100644
 --- a/xbmc/GUIInfoManager.cpp
 +++ b/xbmc/GUIInfoManager.cpp
-@@ -5198,7 +5198,9 @@ bool CGUIInfoManager::GetLibraryBool(int condition)
+@@ -5287,7 +5287,9 @@ bool CGUIInfoManager::GetLibraryBool(int condition)
          db.Close();
        }
      }
@@ -13708,32 +13782,671 @@ index f137f32..0bbaa95 100644
    }
    else if (condition == LIBRARY_HAS_MOVIES)
    {
+diff --git a/xbmc/cores/dvdplayer/DVDDemuxers/DVDDemuxSpotify.cpp b/xbmc/cores/dvdplayer/DVDDemuxers/DVDDemuxSpotify.cpp
+new file mode 100644
+index 0000000..c9606e7
+--- /dev/null
++++ b/xbmc/cores/dvdplayer/DVDDemuxers/DVDDemuxSpotify.cpp
+@@ -0,0 +1,180 @@
++/*
++ spotyxbmc2 - A project to integrate Spotify into XBMC
++ Copyright (C) 2013  Samuel Cabrero <samuelcabrero@gmail.com>
++
++ This program is free software: you can redistribute it and/or modify
++ it under the terms of the GNU General Public License as published by
++ the Free Software Foundation, either version 3 of the License, or
++ (at your option) any later version.
++
++ This program is distributed in the hope that it will be useful,
++ but WITHOUT ANY WARRANTY; without even the implied warranty of
++ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ GNU General Public License for more details.
++
++ You should have received a copy of the GNU General Public License
++ along with this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++
++#include "DVDDemuxSpotify.h"
++#include "DVDInputStreams/DVDInputStream.h"
++#include "DVDDemuxUtils.h"
++#include "music/spotyXBMC/SxSettings.h"
++#include "utils/log.h"
++#include "../DVDClock.h"
++
++using namespace std;
++
++class CDemuxStreamAudioSpotify: public CDemuxStreamAudio {
++	CDVDDemuxSpotify *m_parent;
++	string m_codec;
++public:
++	CDemuxStreamAudioSpotify(CDVDDemuxSpotify *parent, const string& codec) :
++			m_parent(parent), m_codec(codec)
++
++	{
++	}
++	void GetStreamInfo(string& strInfo) {
++		CStdString info;
++		info.Format("%s", m_codec.c_str());
++		strInfo = info;
++	}
++};
++
++CDVDDemuxSpotify::CDVDDemuxSpotify() :
++		CDVDDemux() {
++	m_pInput = NULL;
++	m_stream = NULL;
++	m_pts = 0;
++}
++
++CDVDDemuxSpotify::~CDVDDemuxSpotify() {
++	Dispose();
++}
++
++bool CDVDDemuxSpotify::Open(CDVDInputStream* pInput) {
++	if (!pInput || !pInput->IsStreamType(DVDSTREAM_TYPE_SPOTIFY))
++		return false;
++
++	m_pInput = pInput;
++	m_stream = new CDemuxStreamAudioSpotify(this, "Spotify");
++
++	m_stream->iSampleRate = 44100;
++	m_stream->iBitsPerSample = 16;
++	m_stream->iBitRate =
++			addon_music_spotify::Settings::getInstance()->useHighBitrate() ?
++					320000 : 160000;
++	m_stream->iChannels = 2;
++	m_stream->type = STREAM_AUDIO;
++	m_stream->codec = CODEC_ID_PCM_S16LE;
++
++	return true;
++}
++
++void CDVDDemuxSpotify::Dispose() {
++	delete m_stream;
++	m_stream = NULL;
++
++	m_pInput = NULL;
++	m_pts = 0;
++}
++
++void CDVDDemuxSpotify::Reset() {
++	CDVDInputStream* pInputStream = m_pInput;
++	Dispose();
++	Open(pInputStream);
++}
++
++void CDVDDemuxSpotify::Abort() {
++	if (m_pInput)
++		return m_pInput->Abort();
++}
++
++#define SPOTIFY_READ_SIZE (2048 * sizeof(int16_t))
++DemuxPacket* CDVDDemuxSpotify::Read() {
++	if (!m_pInput)
++		return NULL;
++
++	DemuxPacket* pPacket = CDVDDemuxUtils::AllocateDemuxPacket(
++			SPOTIFY_READ_SIZE);
++
++	if (!pPacket) {
++		if (m_pInput)
++			m_pInput->Close();
++		return NULL;
++	}
++
++	pPacket->iStreamId = 0;
++	pPacket->iSize = m_pInput->Read(pPacket->pData, SPOTIFY_READ_SIZE);
++	if (pPacket->iSize < 1) {
++		delete pPacket;
++		pPacket = NULL;
++	} else {
++		int n = (m_stream->iChannels * m_stream->iBitsPerSample
++				* m_stream->iSampleRate) >> 3;
++		if (n > 0) {
++			m_pts += ((double) pPacket->iSize * DVD_TIME_BASE) / n;
++			pPacket->dts = m_pts;
++			pPacket->pts = m_pts;
++		} else {
++			pPacket->dts = DVD_NOPTS_VALUE;
++			pPacket->pts = DVD_NOPTS_VALUE;
++		}
++	}
++
++	return pPacket;
++}
++
++void CDVDDemuxSpotify::Flush() {
++
++}
++
++bool CDVDDemuxSpotify::SeekTime(int time, bool backwords, double *startpts) {
++	if (time < 0)
++		time = 0;
++
++	CDVDInputStream::ISeekTime* ist =
++			dynamic_cast<CDVDInputStream::ISeekTime*>(m_pInput);
++	if (ist) {
++		if (!ist->SeekTime(time))
++			return false;
++		m_pts = (int64_t) time * (AV_TIME_BASE / 1000);
++		if (startpts)
++			*startpts = DVD_NOPTS_VALUE;
++		return true;
++	}
++	return false;
++}
++
++void CDVDDemuxSpotify::SetSpeed(int iSpeed) {
++
++}
++
++CDemuxStream* CDVDDemuxSpotify::GetStream(int iStreamId) {
++	if (iStreamId != 0)
++		return NULL;
++
++	return m_stream;
++}
++
++int CDVDDemuxSpotify::GetStreamLength() {
++	if (m_pInput)
++		return m_pInput->GetLength();
++	return 0;
++}
++
++int CDVDDemuxSpotify::GetNrOfStreams() {
++	return (m_stream == NULL ? 0 : 1);
++}
++
++std::string CDVDDemuxSpotify::GetFileName() {
++	if (m_pInput)
++		return m_pInput->GetFileName();
++	else
++		return "";
++}
++
++void CDVDDemuxSpotify::GetStreamCodecName(int iStreamId, CStdString &strName) {
++	if (m_stream && iStreamId == 0)
++		strName = "BXA";
++}
+diff --git a/xbmc/cores/dvdplayer/DVDDemuxers/DVDDemuxSpotify.h b/xbmc/cores/dvdplayer/DVDDemuxers/DVDDemuxSpotify.h
+new file mode 100644
+index 0000000..4ecb9a4
+--- /dev/null
++++ b/xbmc/cores/dvdplayer/DVDDemuxers/DVDDemuxSpotify.h
+@@ -0,0 +1,47 @@
++#pragma once
++/*
++ spotyxbmc2 - A project to integrate Spotify into XBMC
++ Copyright (C) 2013  Samuel Cabrero <samuelcabrero@gmail.com>
++
++ This program is free software: you can redistribute it and/or modify
++ it under the terms of the GNU General Public License as published by
++ the Free Software Foundation, either version 3 of the License, or
++ (at your option) any later version.
++
++ This program is distributed in the hope that it will be useful,
++ but WITHOUT ANY WARRANTY; without even the implied warranty of
++ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ GNU General Public License for more details.
++
++ You should have received a copy of the GNU General Public License
++ along with this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++
++#include "DVDDemux.h"
++
++class CDVDDemuxSpotify: public CDVDDemux {
++public:
++	CDVDDemuxSpotify();
++	virtual ~CDVDDemuxSpotify();
++
++	bool Open(CDVDInputStream* pInput);
++	void Dispose();
++	void Reset();
++	void Abort();
++	void Flush();
++	DemuxPacket* Read();
++
++	bool SeekTime(int time, bool backwords = false, double* startpts = NULL);
++	void SetSpeed(int iSpeed);
++	int GetStreamLength();
++	CDemuxStream* GetStream(int iStreamId);
++	int GetNrOfStreams();
++	std::string GetFileName();
++	virtual void GetStreamCodecName(int iStreamId, CStdString &strName);
++private:
++	friend class CDemuxStreamAudioSpotify;
++	CDVDInputStream *m_pInput;
++	CDemuxStreamAudio *m_stream;
++	double m_pts;
++};
++
+diff --git a/xbmc/cores/dvdplayer/DVDDemuxers/DVDFactoryDemuxer.cpp b/xbmc/cores/dvdplayer/DVDDemuxers/DVDFactoryDemuxer.cpp
+index ecc536a..e63d04d 100644
+--- a/xbmc/cores/dvdplayer/DVDDemuxers/DVDFactoryDemuxer.cpp
++++ b/xbmc/cores/dvdplayer/DVDDemuxers/DVDFactoryDemuxer.cpp
+@@ -32,6 +32,7 @@
+ #endif
+ #include "DVDDemuxBXA.h"
+ #include "DVDDemuxPVRClient.h"
++#include "DVDDemuxSpotify.h"
+ #include "pvr/PVRManager.h"
+ #include "pvr/addons/PVRClients.h"
+ 
+@@ -52,6 +53,15 @@ CDVDDemux* CDVDFactoryDemuxer::CreateDemuxer(CDVDInputStream* pInputStream)
+       return NULL;
+   }
+ 
++  if (pInputStream->IsStreamType(DVDSTREAM_TYPE_SPOTIFY))
++  {
++    auto_ptr<CDVDDemuxSpotify> demuxer(new CDVDDemuxSpotify());
++    if(demuxer->Open(pInputStream))
++      return demuxer.release();
++    else
++      return NULL;
++  }
++
+   if (pInputStream->IsStreamType(DVDSTREAM_TYPE_HTTP))
+   {
+     CDVDInputStreamHttp* pHttpStream = (CDVDInputStreamHttp*)pInputStream;
+diff --git a/xbmc/cores/dvdplayer/DVDDemuxers/Makefile.in b/xbmc/cores/dvdplayer/DVDDemuxers/Makefile.in
+index b83c631..df04ac8 100644
+--- a/xbmc/cores/dvdplayer/DVDDemuxers/Makefile.in
++++ b/xbmc/cores/dvdplayer/DVDDemuxers/Makefile.in
+@@ -8,6 +8,7 @@ SRCS += DVDDemuxPVRClient.cpp
+ SRCS += DVDDemuxShoutcast.cpp
+ SRCS += DVDDemuxUtils.cpp
+ SRCS += DVDDemuxVobsub.cpp
++SRCS += DVDDemuxSpotify.cpp
+ SRCS += DVDFactoryDemuxer.cpp
+ 
+ LIB = DVDDemuxers.a
+diff --git a/xbmc/cores/dvdplayer/DVDInputStreams/DVDFactoryInputStream.cpp b/xbmc/cores/dvdplayer/DVDInputStreams/DVDFactoryInputStream.cpp
+index 03fae82..6fbb11a 100644
+--- a/xbmc/cores/dvdplayer/DVDInputStreams/DVDFactoryInputStream.cpp
++++ b/xbmc/cores/dvdplayer/DVDInputStreams/DVDFactoryInputStream.cpp
+@@ -28,6 +28,7 @@
+ #include "DVDInputStreamPVRManager.h"
+ #include "DVDInputStreamTV.h"
+ #include "DVDInputStreamRTMP.h"
++#include "DVDInputStreamSpotify.h"
+ #ifdef HAVE_LIBBLURAY
+ #include "DVDInputStreamBluray.h"
+ #endif
+@@ -113,6 +114,9 @@ CDVDInputStream* CDVDFactoryInputStream::CreateInputStream(IDVDPlayer* pPlayer,
+   else if(file.substr(0, 7) == "htsp://")
+     return new CDVDInputStreamHTSP();
+ #endif
++  if (item.IsSpotify()){
++	  return new CDVDInputStreamSpotify();
++  }
+ 
+   // our file interface handles all these types of streams
+   return (new CDVDInputStreamFile());
+diff --git a/xbmc/cores/dvdplayer/DVDInputStreams/DVDInputStream.h b/xbmc/cores/dvdplayer/DVDInputStreams/DVDInputStream.h
+index b3b7ae3..7467617 100644
+--- a/xbmc/cores/dvdplayer/DVDInputStreams/DVDInputStream.h
++++ b/xbmc/cores/dvdplayer/DVDInputStreams/DVDInputStream.h
+@@ -40,6 +40,7 @@ enum DVDStreamType
+   DVDSTREAM_TYPE_MPLS   = 10,
+   DVDSTREAM_TYPE_BLURAY = 11,
+   DVDSTREAM_TYPE_PVRMANAGER = 12,
++  DVDSTREAM_TYPE_SPOTIFY = 13,
+ };
+ 
+ #define SEEK_POSSIBLE 0x10 // flag used to check if protocol allows seeks
+diff --git a/xbmc/cores/dvdplayer/DVDInputStreams/DVDInputStreamSpotify.cpp b/xbmc/cores/dvdplayer/DVDInputStreams/DVDInputStreamSpotify.cpp
+new file mode 100644
+index 0000000..935390c
+--- /dev/null
++++ b/xbmc/cores/dvdplayer/DVDInputStreams/DVDInputStreamSpotify.cpp
+@@ -0,0 +1,232 @@
++/*
++ spotyxbmc2 - A project to integrate Spotify into XBMC
++ Copyright (C) 2013  Samuel Cabrero <samuelcabrero@gmail.com>
++
++ This program is free software: you can redistribute it and/or modify
++ it under the terms of the GNU General Public License as published by
++ the Free Software Foundation, either version 3 of the License, or
++ (at your option) any later version.
++
++ This program is distributed in the hope that it will be useful,
++ but WITHOUT ANY WARRANTY; without even the implied warranty of
++ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ GNU General Public License for more details.
++
++ You should have received a copy of the GNU General Public License
++ along with this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++
++#include "DVDInputStreamSpotify.h"
++#include "playlists/PlayList.h"
++#include "PlayListPlayer.h"
++#include "utils/log.h"
++#include "utils/URIUtils.h"
++#include "music/spotyXBMC/session/Session.h"
++#include "music/spotyXBMC/radio/RadioHandler.h"
++#include "music/spotyXBMC/player/PlayerHandler.h"
++#include "utils/RingBuffer.h"
++
++#define XMIN(a,b) ((a)<(b)?(a):(b))
++
++using namespace addon_music_spotify;
++using namespace PLAYLIST;
++
++CDVDInputStreamSpotify::CDVDInputStreamSpotify() :
++		CDVDInputStream(DVDSTREAM_TYPE_SPOTIFY) {
++	m_buffer.Destroy();
++	m_currentTrack = 0;
++	m_isPlayerLoaded = false;
++	m_endOfTrack = false;
++	m_totalTime = 0;
++}
++
++CDVDInputStreamSpotify::~CDVDInputStreamSpotify() {
++	Close();
++}
++
++bool CDVDInputStreamSpotify::Open(const char* strFile,
++		const std::string& content) {
++	m_buffer.Create(2048 * sizeof(int16_t) * 50);
++
++	CStdString uri = URIUtils::GetFileName(strFile);
++	CStdString extension = uri.Right(uri.GetLength() - uri.Find('.') - 1);
++	if (extension.Left(12) == "spotifyradio") {
++		//if its a radiotrack the radionumber and tracknumber is secretly
++		// encoded at the end of the extension
++		CStdString trackStr = extension.Right(
++				extension.GetLength() - extension.ReverseFind('#') - 1);
++		CStdString radioNumber = extension.Left(uri.Find('#'));
++		radioNumber = radioNumber.Right(
++				radioNumber.GetLength() - radioNumber.Find('#') - 1);
++		RadioHandler::getInstance()->pushToTrack(atoi(radioNumber),
++				atoi(trackStr));
++	}
++
++	//we have a non legit extension so remove it manually
++	uri = uri.Left(uri.Find('.'));
++
++	Logger::printOut("trying to load track:");
++	Logger::printOut(uri);
++	sp_link *spLink = sp_link_create_from_string(uri);
++	m_currentTrack = sp_link_as_track(spLink);
++	sp_track_add_ref(m_currentTrack);
++	sp_link_release(spLink);
++	m_endOfTrack = false;
++	m_isPlayerLoaded = false;
++	m_totalTime = sp_track_duration(m_currentTrack);
++
++	// Prefetch the next track!
++
++	CPlayList & playlist = g_playlistPlayer.GetPlaylist(PLAYLIST_MUSIC);
++	int nextSong = g_playlistPlayer.GetNextSong();
++
++	if (nextSong >= 0 && nextSong < playlist.size()) {
++		CFileItemPtr song = playlist[nextSong];
++		if (song != NULL) {
++			CStdString uri = song->GetPath();
++			if (uri.Left(7).Equals("spotify")) {
++				uri = uri.Left(uri.Find('.'));
++				Logger::printOut("prefetching track:");
++				Logger::printOut(uri);
++				sp_link *spLink = sp_link_create_from_string(uri);
++				sp_track* track = sp_link_as_track(spLink);
++				sp_session_player_prefetch(getSession(), track);
++				sp_link_release(spLink);
++			}
++		}
++	}
++	return true;
++}
++
++void CDVDInputStreamSpotify::Close() {
++	unloadPlayer();
++	m_buffer.Destroy();
++}
++
++int CDVDInputStreamSpotify::Read(BYTE* pBuffer, int size) {
++	if (!m_isPlayerLoaded)
++		loadPlayer();
++
++	// Wait at most 3 seconds to fill buffer
++	int maxLoops = 60;
++	while (!m_endOfTrack && m_buffer.getMaxReadSize() <= 0) {
++		if (--maxLoops <= 0) {
++			Logger::printOut("Empty buffer");
++			return 0;
++		}
++		Sleep(50);
++	}
++
++	unsigned int want = (unsigned int)
++			XMIN(m_buffer.getMaxReadSize(), (unsigned int)size);
++
++	if (m_buffer.ReadData((char *) pBuffer, want))
++		return want;
++
++	return 0;
++}
++
++bool CDVDInputStreamSpotify::SeekTime(int iTimeInMsec) {
++	Logger::printOut("trying to seek");
++	//if (sp_session_player_seek(getSession(), iTimeInMsec) != SP_ERROR_OK)
++	//	return false;
++	sp_session_player_seek(getSession(), iTimeInMsec);
++	return true;
++}
++
++int64_t CDVDInputStreamSpotify::Seek(int64_t offset, int whence) {
++
++	if (whence == SEEK_POSSIBLE)
++		return 0;
++	return -1;
++}
++
++bool CDVDInputStreamSpotify::IsEOF() {
++// TODO Semaphore
++	return m_endOfTrack;
++}
++
++int64_t CDVDInputStreamSpotify::GetLength() {
++	return m_totalTime;
++}
++
++bool CDVDInputStreamSpotify::Pause(double dTime) {
++//CSingleLock lock(m_RTMPSection);
++	return true;
++}
++
++bool CDVDInputStreamSpotify::loadPlayer() {
++	Logger::printOut("load player");
++	if (!m_isPlayerLoaded) {
++		//do we have a track at all?
++		if (m_currentTrack) {
++			CStdString name;
++			Logger::printOut("load player 2");
++			if (sp_track_is_loaded(m_currentTrack)) {
++				sp_error error = sp_session_player_load(getSession(),
++						m_currentTrack);
++				CStdString message;
++				Logger::printOut("load player 3");
++				message.Format("%s", sp_error_message(error));
++				Logger::printOut(message);
++				Logger::printOut("load player 4");
++				if (SP_ERROR_OK == error) {
++					PlayerHandler::getInstance()->attachPlayer(this);
++					sp_session_player_play(getSession(), true);
++					m_isPlayerLoaded = true;
++					Logger::printOut("load player 5");
++					return true;
++				}
++			}
++		} else
++			return false;
++	}
++	return true;
++}
++
++bool CDVDInputStreamSpotify::unloadPlayer() {
++//make sure there is no music_delivery while we are removing the codec
++	while (!Session::getInstance()->lock()) {
++	}
++	if (m_isPlayerLoaded) {
++		sp_session_player_play(getSession(), false);
++		sp_session_player_unload(getSession());
++		if (m_currentTrack != NULL) {
++			sp_track_release(m_currentTrack);
++		}
++		PlayerHandler::getInstance()->detachPlayer(this);
++	}
++
++	m_currentTrack = NULL;
++	m_isPlayerLoaded = false;
++	m_endOfTrack = true;
++	Session::getInstance()->unlock();
++	return true;
++}
++
++sp_session* CDVDInputStreamSpotify::getSession() {
++	return Session::getInstance()->getSpSession();
++}
++
++int CDVDInputStreamSpotify::sp_musicDelivery(const sp_audioformat *format,
++		const void *frames, int num_frames) {
++	if (num_frames == 0) {
++		Logger::printOut("musicDelivery Discontinuity");
++		// A discontinuity has occurred, flush buffers and return
++		m_buffer.Clear();
++		return 0;
++	}
++
++	int consumedFrames = 0;
++	unsigned int size = num_frames * (int) sizeof(int16_t) * format->channels;
++
++	if (m_buffer.getMaxWriteSize() > size) {
++		if (m_buffer.WriteData((char *) frames, size))
++			consumedFrames = size / ((int) sizeof(int16_t) * format->channels);
++	}
++	return consumedFrames;
++}
++
++void CDVDInputStreamSpotify::sp_endOfTrack() {
++	m_endOfTrack = true;
++}
+diff --git a/xbmc/cores/dvdplayer/DVDInputStreams/DVDInputStreamSpotify.h b/xbmc/cores/dvdplayer/DVDInputStreams/DVDInputStreamSpotify.h
+new file mode 100644
+index 0000000..7b096e0
+--- /dev/null
++++ b/xbmc/cores/dvdplayer/DVDInputStreams/DVDInputStreamSpotify.h
+@@ -0,0 +1,59 @@
++#pragma once
++
++/*
++ spotyxbmc2 - A project to integrate Spotify into XBMC
++ Copyright (C) 2013  Samuel Cabrero <samuelcabrero@gmail.com>
++
++ This program is free software: you can redistribute it and/or modify
++ it under the terms of the GNU General Public License as published by
++ the Free Software Foundation, either version 3 of the License, or
++ (at your option) any later version.
++
++ This program is distributed in the hope that it will be useful,
++ but WITHOUT ANY WARRANTY; without even the implied warranty of
++ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ GNU General Public License for more details.
++
++ You should have received a copy of the GNU General Public License
++ along with this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++
++#include "DVDInputStream.h"
++#include "utils/RingBuffer.h"
++#include "music/spotyXBMC/player/ISpotifyPlayer.h"
++#include </usr/local/include/libspotify/api.h>
++
++using namespace addon_music_spotify;
++class CDVDInputStreamSpotify: public CDVDInputStream,
++		public CDVDInputStream::ISeekTime,
++		public ISpotifyPlayer {
++public:
++	CDVDInputStreamSpotify();
++	virtual ~CDVDInputStreamSpotify();
++
++	virtual bool Open(const char* strFile, const std::string& content);
++	virtual void Close();
++	virtual int Read(BYTE* buf, int buf_size);
++	bool SeekTime(int iTimeInMsec);
++	virtual int64_t Seek(int64_t offset, int whence);
++	virtual bool IsEOF();
++	virtual int64_t GetLength();
++	virtual bool Pause(double dTime);
++
++	int sp_musicDelivery(const sp_audioformat *format, const void *frames,
++			int num_frames);
++	void sp_endOfTrack();
++
++private:
++	bool loadPlayer();
++	bool unloadPlayer();
++	sp_session * getSession();
++
++	sp_track *m_currentTrack;
++	CRingBuffer m_buffer;
++	//bool m_startStream;
++	bool m_isPlayerLoaded;
++	bool m_endOfTrack;
++	int64_t m_totalTime; // time in milliseconds
++};
++
+diff --git a/xbmc/cores/dvdplayer/DVDInputStreams/Makefile b/xbmc/cores/dvdplayer/DVDInputStreams/Makefile
+index 4607ed3..0bed883 100644
+--- a/xbmc/cores/dvdplayer/DVDInputStreams/Makefile
++++ b/xbmc/cores/dvdplayer/DVDInputStreams/Makefile
+@@ -14,6 +14,7 @@ SRCS=	DVDFactoryInputStream.cpp \
+ 	DVDInputStreamPVRManager.cpp \
+ 	DVDInputStreamStack.cpp \
+ 	DVDInputStreamTV.cpp \
++	DVDInputStreamSpotify.cpp \
+ 	DVDStateSerializer.cpp \
+ 
+ LIB=	DVDInputStreams.a
 diff --git a/xbmc/cores/paplayer/CodecFactory.cpp b/xbmc/cores/paplayer/CodecFactory.cpp
-index 9f34d16..971f9fc 100644
+index f1ce580..80c6967 100644
 --- a/xbmc/cores/paplayer/CodecFactory.cpp
 +++ b/xbmc/cores/paplayer/CodecFactory.cpp
-@@ -43,6 +43,8 @@
- #include "BXAcodec.h" 
+@@ -41,6 +41,7 @@
+ #include "URL.h"
+ #include "DVDPlayerCodec.h"
  #include "PCMCodec.h"
++#include "SpotifyCodec.h"
  
-+#include "../../music/spotyXBMC/Addon.music.spotify.h"
-+
  ICodec* CodecFactory::CreateCodec(const CStdString& strFileType)
  {
-   if (strFileType.Equals("mp3") || strFileType.Equals("mp2"))
-@@ -110,6 +112,10 @@ ICodec* CodecFactory::CreateCodec(const CStdString& strFileType)
+@@ -109,6 +110,10 @@ ICodec* CodecFactory::CreateCodec(const CStdString& strFileType)
  #endif
    else if (strFileType.Equals("tta"))
      return new DVDPlayerCodec();
 +  //spotify
 +  //TODO see if any addon has the ability to play the format.... now hardcode spotify
 +  else if (strFileType.Left(7).Equals("spotify"))
-+    return g_spotify->GetCodec();
++    return new SpotifyCodec();
  
    return NULL;
  }
+diff --git a/xbmc/cores/paplayer/Makefile.in b/xbmc/cores/paplayer/Makefile.in
+index 31cc8bd..660e5b2 100644
+--- a/xbmc/cores/paplayer/Makefile.in
++++ b/xbmc/cores/paplayer/Makefile.in
+@@ -25,6 +25,7 @@ SRCS += TimidityCodec.cpp
+ SRCS += VGMCodec.cpp
+ SRCS += WAVcodec.cpp
+ SRCS += YMCodec.cpp
++SRCS += SpotifyCodec.cpp
+ 
+ ifeq (@USE_ASAP_CODEC@,1)
+ SRCS += ASAPCodec.cpp
 diff --git a/xbmc/cores/paplayer/PAPlayer.cpp b/xbmc/cores/paplayer/PAPlayer.cpp
-index abf47bc..47fb7a4 100644
+index 5a99843..9623ac6 100644
 --- a/xbmc/cores/paplayer/PAPlayer.cpp
 +++ b/xbmc/cores/paplayer/PAPlayer.cpp
 @@ -37,6 +37,7 @@
@@ -13822,11 +14535,328 @@ index abf47bc..47fb7a4 100644
    StreamInfo *si = new StreamInfo();
  
    if (!si->m_decoder.Create(file, (file.m_lStartOffset * 1000) / 75))
+diff --git a/xbmc/cores/paplayer/SpotifyCodec.cpp b/xbmc/cores/paplayer/SpotifyCodec.cpp
+new file mode 100644
+index 0000000..b6b2cd2
+--- /dev/null
++++ b/xbmc/cores/paplayer/SpotifyCodec.cpp
+@@ -0,0 +1,247 @@
++/*
++ spotyxbmc2 - A project to integrate Spotify into XBMC
++ Copyright (C) 2011  David Erenger
++               2013  Samuel Cabrero <samuelcabrero@gmail.com>
++
++ This program is free software: you can redistribute it and/or modify
++ it under the terms of the GNU General Public License as published by
++ the Free Software Foundation, either version 3 of the License, or
++ (at your option) any later version.
++
++ This program is distributed in the hope that it will be useful,
++ but WITHOUT ANY WARRANTY; without even the implied warranty of
++ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ GNU General Public License for more details.
++
++ You should have received a copy of the GNU General Public License
++ along with this program.  If not, see <http://www.gnu.org/licenses/>.
++
++ For contact with the author:
++ david.erenger@gmail.com
++ */
++
++#include "SpotifyCodec.h"
++#include "playlists/PlayList.h"
++#include "PlayListPlayer.h"
++#include "Util.h"
++#include "utils/URIUtils.h"
++#include <stdint.h>
++#include <string.h>
++#include "music/spotyXBMC/session/Session.h"
++#include "music/spotyXBMC/radio/RadioHandler.h"
++#include "music/spotyXBMC/player/PlayerHandler.h"
++
++using namespace addon_music_spotify;
++using namespace PLAYLIST;
++
++SpotifyCodec::SpotifyCodec() {
++	m_SampleRate = 44100;
++	m_Channels = 2;
++	m_BitsPerSample = 16;
++	// The bitrate is hardcoded, we dont no it before first music delivery and
++	// then its to late, the skin has already printed it out
++	m_Bitrate = Settings::getInstance()->useHighBitrate() ? 320000 : 160000;
++	m_CodecName = "spotify";
++	m_DataFormat = AE_FMT_S16NE;
++	m_TotalTime = 0;
++	m_currentTrack = 0;
++	m_isPlayerLoaded = false;
++	m_buffer = 0;
++	m_bufferPos = 0;
++	m_bufferSize = 0;
++	m_endOfTrack = false;
++	m_startStream = false;
++}
++
++SpotifyCodec::~SpotifyCodec() {
++	DeInit();
++	delete m_buffer;
++}
++
++bool SpotifyCodec::Init(const CStdString & strFile, unsigned int filecache) {
++	m_bufferSize = 2048 * sizeof(int16_t) * 50;
++	m_buffer = new char[m_bufferSize];
++	CStdString uri = URIUtils::GetFileName(strFile);
++	CStdString extension = uri.Right(uri.GetLength() - uri.Find('.') - 1);
++	if (extension.Left(12) == "spotifyradio") {
++		//if its a radiotrack the radionumber and tracknumber is secretly
++		// encoded at the end of the extension
++		CStdString trackStr = extension.Right(
++				extension.GetLength() - extension.ReverseFind('#') - 1);
++		Logger::printOut(extension);
++		CStdString radioNumber = extension.Left(uri.Find('#'));
++		Logger::printOut(radioNumber);
++		radioNumber = radioNumber.Right(
++				radioNumber.GetLength() - radioNumber.Find('#') - 1);
++		Logger::printOut("loading codec radio");
++		RadioHandler::getInstance()->pushToTrack(atoi(radioNumber),
++				atoi(trackStr));
++	}
++	//we have a non legit extension so remove it manually
++	uri = uri.Left(uri.Find('.'));
++
++	Logger::printOut("trying to load track:");
++	Logger::printOut(uri);
++	sp_link *spLink = sp_link_create_from_string(uri);
++	m_currentTrack = sp_link_as_track(spLink);
++	sp_track_add_ref(m_currentTrack);
++	sp_link_release(spLink);
++	m_endOfTrack = false;
++	m_bufferPos = 0;
++	m_startStream = false;
++	m_isPlayerLoaded = false;
++	m_TotalTime = sp_track_duration(m_currentTrack);
++
++	//prefetch the next track!
++
++	CPlayList & playlist = g_playlistPlayer.GetPlaylist(PLAYLIST_MUSIC);
++	int nextSong = g_playlistPlayer.GetNextSong();
++
++	if (nextSong >= 0 && nextSong < playlist.size()) {
++		CFileItemPtr song = playlist[nextSong];
++		if (song != NULL) {
++			CStdString uri = song->GetPath();
++			if (uri.Left(7).Equals("spotify")) {
++				uri = uri.Left(uri.Find('.'));
++				Logger::printOut("prefetching track:");
++				Logger::printOut(uri);
++				sp_link *spLink = sp_link_create_from_string(uri);
++				sp_track* track = sp_link_as_track(spLink);
++				sp_session_player_prefetch(getSession(), track);
++				sp_link_release(spLink);
++			}
++		}
++	}
++	return true;
++}
++
++void SpotifyCodec::DeInit() {
++	unloadPlayer();
++}
++
++bool SpotifyCodec::CanSeek() {
++	return true;
++}
++
++int64_t SpotifyCodec::Seek(int64_t iSeekTime) {
++	Logger::printOut("trying to seek");
++	sp_session_player_seek(getSession(), (int) iSeekTime);
++	m_bufferPos = 0;
++	return iSeekTime;
++}
++
++int SpotifyCodec::ReadPCM(BYTE *pBuffer, int size, int *actualsize) {
++	*actualsize = 0;
++	if (!m_isPlayerLoaded)
++		loadPlayer();
++
++	if (m_startStream) {
++		if (m_endOfTrack && m_bufferPos == 0) {
++			return READ_EOF;
++		} else if (m_bufferPos > 0) {
++			int amountToMove = m_bufferPos;
++			if (m_bufferPos > size)
++				amountToMove = size;
++			memcpy(pBuffer, m_buffer, amountToMove);
++			memmove(m_buffer, m_buffer + amountToMove,
++					m_bufferSize - amountToMove);
++			m_bufferPos -= amountToMove;
++			*actualsize = amountToMove;
++		}
++	}
++	return READ_SUCCESS;
++}
++
++bool SpotifyCodec::CanInit() {
++	return true;
++}
++
++bool SpotifyCodec::loadPlayer() {
++	Logger::printOut("load player");
++	if (!m_isPlayerLoaded) {
++		//do we have a track at all?
++		if (m_currentTrack) {
++			CStdString name;
++			Logger::printOut("load player 2");
++			if (sp_track_is_loaded(m_currentTrack)) {
++				sp_error error = sp_session_player_load(getSession(),
++						m_currentTrack);
++				CStdString message;
++				Logger::printOut("load player 3");
++				message.Format("%s", sp_error_message(error));
++				Logger::printOut(message);
++				Logger::printOut("load player 4");
++				if (SP_ERROR_OK == error) {
++					PlayerHandler::getInstance()->attachPlayer(this);
++					sp_session_player_play(getSession(), true);
++					m_isPlayerLoaded = true;
++					Logger::printOut("load player 5");
++					return true;
++				}
++			}
++		} else
++			return false;
++	}
++	return true;
++}
++
++bool SpotifyCodec::unloadPlayer() {
++	//make sure there is no music_delivery while we are removing the codec
++	while (!Session::getInstance()->lock()) {
++	}
++	if (m_isPlayerLoaded) {
++		sp_session_player_play(getSession(), false);
++		sp_session_player_unload(getSession());
++		if (m_currentTrack != NULL) {
++			sp_track_release(m_currentTrack);
++		}
++		PlayerHandler::getInstance()->detachPlayer(this);
++	}
++
++	m_currentTrack = NULL;
++	m_isPlayerLoaded = false;
++	m_endOfTrack = true;
++	Session::getInstance()->unlock();
++	return true;
++}
++
++int SpotifyCodec::sp_musicDelivery(const sp_audioformat *format,
++		const void *frames, int num_frames) {
++	//Logger::printOut("music delivery");
++	int amountToMove = num_frames * (int) sizeof(int16_t) * format->channels;
++
++	if ((m_bufferPos + amountToMove) >= m_bufferSize) {
++		amountToMove = m_bufferSize - m_bufferPos;
++	}
++
++	memcpy(m_buffer + m_bufferPos, frames, amountToMove);
++	m_bufferPos += amountToMove;
++
++	if (!m_startStream && m_bufferPos == m_bufferSize) {
++		//now the buffer is full, start playing
++		m_startStream = true;
++	}
++
++	return amountToMove / ((int) sizeof(int16_t) * format->channels);
++}
++
++void SpotifyCodec::sp_endOfTrack() {
++	m_endOfTrack = true;
++}
++
++sp_session* SpotifyCodec::getSession() {
++	return Session::getInstance()->getSpSession();
++}
++
++CAEChannelInfo SpotifyCodec::GetChannelInfo() {
++	static enum AEChannel map[2][3] = { { AE_CH_FC, AE_CH_NULL }, { AE_CH_FL,
++			AE_CH_FR, AE_CH_NULL } };
++
++	if (m_Channels > 2) {
++		Logger::printOut("m_Channels is bigger than 2, please fix code,"
++				"I can't return a valid AEChannel map");
++//    return CAEUtil::GuessChLayout(m_Channels);
++	}
++
++	return CAEChannelInfo(map[m_Channels - 1]);
++}
+diff --git a/xbmc/cores/paplayer/SpotifyCodec.h b/xbmc/cores/paplayer/SpotifyCodec.h
+new file mode 100644
+index 0000000..5065f87
+--- /dev/null
++++ b/xbmc/cores/paplayer/SpotifyCodec.h
+@@ -0,0 +1,58 @@
++#pragma once
++/*
++ spotyxbmc2 - A project to integrate Spotify into XBMC
++ Copyright (C) 2011  David Erenger
++               2013  Samuel Cabrero <samuelcabrero@gmail.com>
++
++ This program is free software: you can redistribute it and/or modify
++ it under the terms of the GNU General Public License as published by
++ the Free Software Foundation, either version 3 of the License, or
++ (at your option) any later version.
++
++ This program is distributed in the hope that it will be useful,
++ but WITHOUT ANY WARRANTY; without even the implied warranty of
++ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ GNU General Public License for more details.
++
++ You should have received a copy of the GNU General Public License
++ along with this program.  If not, see <http://www.gnu.org/licenses/>.
++
++ For contact with the author:
++ david.erenger@gmail.com
++ */
++
++#include "cores/paplayer/CachingCodec.h"
++#include "music/spotyXBMC/player/ISpotifyPlayer.h"
++#include </usr/local/include/libspotify/api.h>
++
++using namespace addon_music_spotify;
++class SpotifyCodec: public CachingCodec, public ISpotifyPlayer {
++public:
++	SpotifyCodec();
++	virtual ~SpotifyCodec();
++
++	bool Init(const CStdString &strFile, unsigned int filecache);
++	void DeInit();
++	bool CanSeek();
++	int64_t Seek(int64_t iSeekTime);
++	int ReadPCM(BYTE *pBuffer, int size, int *actualsize);
++	bool CanInit();
++	CAEChannelInfo GetChannelInfo();
++
++	int sp_musicDelivery(const sp_audioformat *format, const void *frames,
++			int num_frames);
++	void sp_endOfTrack();
++
++private:
++	bool loadPlayer();
++	bool unloadPlayer();
++
++	sp_session * getSession();
++	sp_track *m_currentTrack;
++	bool m_startStream;
++	bool m_isPlayerLoaded;
++	bool m_endOfTrack;
++	int m_bufferSize;
++	char *m_buffer;
++	int m_bufferPos;
++};
 diff --git a/xbmc/dialogs/GUIDialogContextMenu.h b/xbmc/dialogs/GUIDialogContextMenu.h
-index 282d7ec..22de7ce 100644
+index 942a84d..cdd75e9 100644
 --- a/xbmc/dialogs/GUIDialogContextMenu.h
 +++ b/xbmc/dialogs/GUIDialogContextMenu.h
-@@ -136,7 +136,12 @@ enum CONTEXT_BUTTON { CONTEXT_BUTTON_CANCELLED = 0,
+@@ -135,7 +135,12 @@ enum CONTEXT_BUTTON { CONTEXT_BUTTON_CANCELLED = 0,
                        CONTEXT_BUTTON_USER7,
                        CONTEXT_BUTTON_USER8,
                        CONTEXT_BUTTON_USER9,
@@ -13896,7 +14926,7 @@ index 8c5b8a8..7c2819c 100644
  
    return bSuccess;
 diff --git a/xbmc/filesystem/MusicDatabaseDirectory/DirectoryNodeOverview.cpp b/xbmc/filesystem/MusicDatabaseDirectory/DirectoryNodeOverview.cpp
-index c3ea6a7..b47e57c 100644
+index cd69df1..e714052 100644
 --- a/xbmc/filesystem/MusicDatabaseDirectory/DirectoryNodeOverview.cpp
 +++ b/xbmc/filesystem/MusicDatabaseDirectory/DirectoryNodeOverview.cpp
 @@ -18,6 +18,8 @@
@@ -13991,12 +15021,12 @@ index 34fc013..cecd6ec 100644
    CMusicDatabase db;
    db.Open();
 diff --git a/xbmc/music/Makefile b/xbmc/music/Makefile
-index 66e4a7d..1a7577b 100644
+index 045a267..2f33242 100644
 --- a/xbmc/music/Makefile
 +++ b/xbmc/music/Makefile
-@@ -6,7 +6,38 @@ SRCS=Album.cpp \
-      MusicDbUrl.cpp \
+@@ -7,7 +7,38 @@ SRCS=Album.cpp \
       MusicInfoLoader.cpp \
+      MusicThumbLoader.cpp \
       Song.cpp \
 -     
 +     spotyXBMC/Addon.music.spotify.cpp \
@@ -14015,8 +15045,6 @@ index 66e4a7d..1a7577b 100644
 +     spotyXBMC/search/Search.cpp \
 +     spotyXBMC/search/SearchHandler.cpp \
 +     spotyXBMC/search/SearchResultBackgroundLoader.cpp \
-+     spotyXBMC/player/Codec.cpp \
-+     spotyXBMC/player/PlayerHandler.cpp \
 +     spotyXBMC/playlist/TopLists.cpp \
 +     spotyXBMC/playlist/SxPlaylist.cpp \
 +     spotyXBMC/playlist/StarredList.cpp \
@@ -14029,20 +15057,23 @@ index 66e4a7d..1a7577b 100644
 +     spotyXBMC/thumb/ThumbStore.cpp \
 +     spotyXBMC/track/SxTrack.cpp \
 +     spotyXBMC/track/TrackStore.cpp \
-+     spotyXBMC/track/TrackContainer.cpp
++     spotyXBMC/track/TrackContainer.cpp \
++     spotyXBMC/player/PlayerHandler.cpp \
++     spotyXBMC/player/ISpotifyPlayer.cpp
 +
  LIB=music.a
  
  include ../../Makefile.include
 diff --git a/xbmc/music/spotyXBMC/Addon.music.spotify.cpp b/xbmc/music/spotyXBMC/Addon.music.spotify.cpp
 new file mode 100644
-index 0000000..59c23ce
+index 0000000..0161576
 --- /dev/null
 +++ b/xbmc/music/spotyXBMC/Addon.music.spotify.cpp
-@@ -0,0 +1,762 @@
+@@ -0,0 +1,760 @@
 +/*
 + spotyxbmc2 - A project to integrate Spotify into XBMC
 + Copyright (C) 2011  David Erenger
++               2013  Samuel Cabrero <samuelcabrero@gmail.com>
 +
 + This program is free software: you can redistribute it and/or modify
 + it under the terms of the GNU General Public License as published by
@@ -14102,8 +15133,9 @@ index 0000000..59c23ce
 +bool Addon_music_spotify::enable(bool enable) {
 +	if (enable)
 +		return Session::getInstance()->enable();
-+	else
-+		Session::getInstance()->deInit();
++
++	Session::getInstance()->deInit();
++	return false;
 +}
 +
 +bool Addon_music_spotify::isReady() {
@@ -14126,8 +15158,8 @@ index 0000000..59c23ce
 +				CFileItemPtr pItem(new CFileItem(playlistShare));
 +				SxThumb* thumb = ps->getPlaylist(i)->getThumb();
 +				if (thumb != NULL)
-+					pItem->SetArt("thumb", thumb->getPath());
-+				pItem->SetArt("fanart", Settings::getInstance()->getFanart());
++					pItem->SetArt("thumb",thumb->getPath());
++				pItem->SetProperty("fanart_image", Settings::getInstance()->getFanart());
 +				items.Add(pItem);
 +			}
 +		}
@@ -14204,12 +15236,12 @@ index 0000000..59c23ce
 +		pItem->m_bIsFolder = true;
 +		items.Add(pItem);
 +		pItem->SetIconImage("DefaultMusicArtists.png");
-+		pItem->SetArt("fanart", Settings::getInstance()->getFanart());
++		pItem->SetProperty("fanart_image", Settings::getInstance()->getFanart());
 +	}
 +
 +	//add the albums
 +	vector<SxAlbum*> albums = artist->getAlbums();
-+	for (int i = 0; i < albums.size(); i++) {
++	for (unsigned int i = 0; i < albums.size(); i++) {
 +		items.Add(Utils::SxAlbumToItem(albums[i]));
 +	}
 +	return true;
@@ -14334,7 +15366,7 @@ index 0000000..59c23ce
 +					Session::getInstance()->processEvents();
 +				}
 +				vector<SxTrack*> tracks = album->getTracks();
-+				for (int i = 0; i < tracks.size(); i++) {
++				for (unsigned int i = 0; i < tracks.size(); i++) {
 +					items.Add(Utils::SxTrackToItem(tracks[i]));
 +				}
 +			}
@@ -14360,7 +15392,7 @@ index 0000000..59c23ce
 +		sp_album *spAlbum = sp_link_as_album(spLink);
 +		SxAlbum* salbum = AlbumStore::getInstance()->getAlbum(spAlbum, true);
 +		vector<SxTrack*> tracks = salbum->getTracks();
-+		for (int i = 0; i < tracks.size(); i++) {
++		for (unsigned int i = 0; i < tracks.size(); i++) {
 +			if (disc == tracks[i]->getDisc())
 +				items.Add(Utils::SxTrackToItem(tracks[i]));
 +		}
@@ -14387,7 +15419,7 @@ index 0000000..59c23ce
 +		while (!artist->isTracksLoaded())
 +			;
 +		vector<SxTrack*> tracks = artist->getTracks();
-+		for (int i = 0; i < tracks.size(); i++) {
++		for (unsigned int i = 0; i < tracks.size(); i++) {
 +			items.Add(Utils::SxTrackToItem(tracks[i]));
 +		}
 +	}
@@ -14423,7 +15455,7 @@ index 0000000..59c23ce
 +				radio);
 +		if (radio == 1 || radio == 2) {
 +			vector<SxTrack*> tracks = RadioHandler::getInstance()->getTracks(radio);
-+			for (int i = 0; i < tracks.size(); i++) {
++			for (unsigned int i = 0; i < tracks.size(); i++) {
 +				const CFileItemPtr pItem = Utils::SxTrackToItem(tracks[i], "",
 +						i + lowestTrackNumber + 1);
 +				CStdString path;
@@ -14488,7 +15520,7 @@ index 0000000..59c23ce
 +		while (!artist->isTracksLoaded())
 +			;
 +		vector<SxArtist*> artists = artist->getArtists();
-+		for (int i = 0; i < artists.size(); i++) {
++		for (unsigned int i = 0; i < artists.size(); i++) {
 +			items.Add(Utils::SxArtistToItem(artists[i]));
 +		}
 +	}
@@ -14523,7 +15555,7 @@ index 0000000..59c23ce
 +		pItem->SetPath(path);
 +		pItem->m_bIsFolder = true;
 +		items.Add(pItem);
-+		pItem->SetArt("fanart", Settings::getInstance()->getFanart());
++		pItem->SetProperty("fanart_image", Settings::getInstance()->getFanart());
 +
 +		//add the album entry
 +		CFileItemPtr pItem2(new CFileItem(Settings::getInstance()->getTopListAlbumString()));
@@ -14531,7 +15563,7 @@ index 0000000..59c23ce
 +		pItem2->SetPath(path);
 +		pItem2->m_bIsFolder = true;
 +		items.Add(pItem2);
-+		pItem2->SetArt("fanart", Settings::getInstance()->getFanart());
++		pItem2->SetProperty("fanart_image", Settings::getInstance()->getFanart());
 +
 +		//add the artist entry
 +		CFileItemPtr pItem3(new CFileItem(Settings::getInstance()->getTopListArtistString()));
@@ -14539,7 +15571,7 @@ index 0000000..59c23ce
 +		pItem3->SetPath(path);
 +		pItem3->m_bIsFolder = true;
 +		items.Add(pItem3);
-+		pItem3->SetArt("fanart", Settings::getInstance()->getFanart());
++		pItem3->SetProperty("fanart_image", Settings::getInstance()->getFanart());
 +	}
 +	return true;
 +}
@@ -14556,7 +15588,7 @@ index 0000000..59c23ce
 +		pItem->SetPath(path);
 +		pItem->m_bIsFolder = true;
 +		items.Add(pItem);
-+		pItem->SetArt("fanart", Settings::getInstance()->getFanart());
++		pItem->SetProperty("fanart_image", Settings::getInstance()->getFanart());
 +
 +		//add radio 2
 +		name.Format("%s%s", Settings::getInstance()->getRadioPrefixString(),
@@ -14566,7 +15598,7 @@ index 0000000..59c23ce
 +		pItem2->SetPath(path);
 +		pItem2->m_bIsFolder = true;
 +		items.Add(pItem2);
-+		pItem2->SetArt("fanart", Settings::getInstance()->getFanart());
++		pItem2->SetProperty("fanart_image", Settings::getInstance()->getFanart());
 +
 +	}
 +	return true;
@@ -14709,7 +15741,7 @@ index 0000000..59c23ce
 +		}
 +
 +		vector<SxArtist*> artists = tl->getArtists();
-+		for (int i = 0; i < artists.size(); i++) {
++		for (unsigned int i = 0; i < artists.size(); i++) {
 +			items.Add(Utils::SxArtistToItem(artists[i]));
 +		}
 +
@@ -14731,7 +15763,7 @@ index 0000000..59c23ce
 +		}
 +
 +		vector<SxAlbum*> albums = tl->getAlbums();
-+		for (int i = 0; i < albums.size(); i++) {
++		for (unsigned int i = 0; i < albums.size(); i++) {
 +			items.Add(Utils::SxAlbumToItem(albums[i]));
 +		}
 +	}
@@ -14752,7 +15784,7 @@ index 0000000..59c23ce
 +		}
 +
 +		vector<SxTrack*> tracks = tl->getTracks();
-+		for (int i = 0; i < tracks.size(); i++) {
++		for (unsigned int i = 0; i < tracks.size(); i++) {
 +			items.Add(Utils::SxTrackToItem(tracks[i], "", i + 1));
 +		}
 +	}
@@ -14768,7 +15800,7 @@ index 0000000..59c23ce
 +			albumPrefix.Format("[%s] ", g_localizeStrings.Get(558).c_str());
 +			Logger::printOut("search fetch albums");
 +			vector<SxAlbum*> albums = SearchHandler::getInstance()->getAlbumResults();
-+			for (int i = 0; i < albums.size(); i++) {
++			for (unsigned int i = 0; i < albums.size(); i++) {
 +				//if its a multidisc we need to add them all
 +				int discNumber = albums[i]->getNumberOfDiscs();
 +				if (discNumber == 1) {
@@ -14782,7 +15814,7 @@ index 0000000..59c23ce
 +			}
 +			Logger::printOut("search fetch tracks");
 +			vector<SxTrack*> tracks = SearchHandler::getInstance()->getTrackResults();
-+			for (int i = 0; i < tracks.size(); i++)
++			for (unsigned int i = 0; i < tracks.size(); i++)
 +				items.Add(Utils::SxTrackToItem(tracks[i]));
 +
 +			CStdString artistPrefix;
@@ -14791,26 +15823,23 @@ index 0000000..59c23ce
 +			Logger::printOut("search fetch artists");
 +			vector<SxArtist*> artists =
 +					SearchHandler::getInstance()->getArtistResults();
-+			for (int i = 0; i < artists.size(); i++)
++			for (unsigned int i = 0; i < artists.size(); i++)
 +				items.Add(Utils::SxArtistToItem(artists[i], artistPrefix));
 +		}
 +	}
 +	return true;
 +}
 +
-+ICodec* Addon_music_spotify::GetCodec() {
-+	return (ICodec*) PlayerHandler::getInstance()->getCodec();
-+}
-+
 diff --git a/xbmc/music/spotyXBMC/Addon.music.spotify.h b/xbmc/music/spotyXBMC/Addon.music.spotify.h
 new file mode 100644
-index 0000000..d54d427
+index 0000000..38eac7b
 --- /dev/null
 +++ b/xbmc/music/spotyXBMC/Addon.music.spotify.h
 @@ -0,0 +1,84 @@
 +/*
 + spotyxbmc2 - A project to integrate Spotify into XBMC
 + Copyright (C) 2011  David Erenger
++               2013  Samuel Cabrero <samuelcabrero@gmail.com>
 +
 + This program is free software: you can redistribute it and/or modify
 + it under the terms of the GNU General Public License as published by
@@ -14869,7 +15898,6 @@ index 0000000..d54d427
 +  bool ToggleStarAlbum(CFileItemPtr& item);
 +
 +  bool Search(CStdString query, CFileItemList& items);
-+  ICodec* GetCodec();
 +
 +private:
 +  bool m_isEnabled;
@@ -15034,7 +16062,7 @@ index 0000000..8148649
 +
 diff --git a/xbmc/music/spotyXBMC/SxSettings.cpp b/xbmc/music/spotyXBMC/SxSettings.cpp
 new file mode 100644
-index 0000000..3827c61
+index 0000000..f21f7a2
 --- /dev/null
 +++ b/xbmc/music/spotyXBMC/SxSettings.cpp
 @@ -0,0 +1,170 @@
@@ -15176,7 +16204,7 @@ index 0000000..3827c61
 +    		{ addon->GetSetting(radioC + "2") == "true", 0x2 },
 +    		{ addon->GetSetting(radioC + "3") == "true", 0x4 },
 +    		{ addon->GetSetting(radioC + "4") == "true", 0x8 },
-+    		{ addon->GetSetting(radioC + "") == "true", 0x10 },
++    		{ addon->GetSetting(radioC + "5") == "true", 0x10 },
 +    		{ addon->GetSetting(radioC + "6") == "true", 0x20 },
 +    		{ addon->GetSetting(radioC + "7") == "true", 0x40 },
 +    		{ addon->GetSetting(radioC + "8") == "true", 0x80 },
@@ -15190,7 +16218,7 @@ index 0000000..3827c61
 +    		{ addon->GetSetting(radioC + "16") == "true", 0x8000 },
 +    		{ addon->GetSetting(radioC + "17") == "true", 0x10000 },
 +    		{ addon->GetSetting(radioC + "18") == "true", 0x20000 },
-+			  { addon->GetSetting(radioC + "19") == "true", 0x40000 },
++			{ addon->GetSetting(radioC + "19") == "true", 0x40000 },
 +    		{ addon->GetSetting(radioC + "20") == "true", 0x80000 },
 +    		{ addon->GetSetting(radioC + "21") == "true", 0x100000 },
 +    		{ addon->GetSetting(radioC + "22") == "true", 0x200000 },
@@ -15202,7 +16230,7 @@ index 0000000..3827c61
 +    };
 +
 +    int mask = 0;
-+    for (int i = 0; i < sizeof(radiogenres) / sizeof(radiogenres[0]); i++)
++    for (unsigned int i = 0; i < sizeof(radiogenres) / sizeof(radiogenres[0]); i++)
 +      if (radiogenres[i].enable) mask |= radiogenres[i].id;
 +
 +    return (sp_radio_genre) mask;
@@ -15490,7 +16518,7 @@ index 0000000..3cb0ac9
 +#endif /* SXSETTINGS_H_ */
 diff --git a/xbmc/music/spotyXBMC/Utils.cpp b/xbmc/music/spotyXBMC/Utils.cpp
 new file mode 100644
-index 0000000..fcc1390
+index 0000000..c3394f7
 --- /dev/null
 +++ b/xbmc/music/spotyXBMC/Utils.cpp
 @@ -0,0 +1,240 @@
@@ -15578,8 +16606,8 @@ index 0000000..fcc1390
 +    path.Format("musicdb://3/%s#%i", album->getUri(), discNumber);
 +    const CFileItemPtr pItem(new CFileItem(path, outAlbum));
 +    if (album->hasThumb())
-+      pItem->SetArt("thumb", album->getThumb()->getPath());
-+    pItem->SetArt("fanart", *album->getFanart());
++      pItem->SetArt("thumb",album->getThumb()->getPath());
++    pItem->SetProperty("fanart_image", *album->getFanart());
 +    return pItem;
 +  }
 +
@@ -15609,8 +16637,8 @@ index 0000000..fcc1390
 +    outSong.albumArtist = StringUtils::Split(track->getAlbumArtistName(), g_advancedSettings.m_musicItemSeparator);
 +    const CFileItemPtr pItem(new CFileItem(outSong));
 +    if (track->hasThumb())
-+      pItem->SetArt("thumb", track->getThumb()->getPath());
-+    pItem->SetArt("fanart", *track->getFanart());
++      pItem->SetArt("thumb",track->getThumb()->getPath());
++    pItem->SetProperty("fanart_image", *track->getFanart());
 +    return pItem;
 +  }
 +
@@ -15632,10 +16660,10 @@ index 0000000..fcc1390
 +    pItem->GetMusicInfoTag()->SetArtist(artist->getArtistName());
 +
 +    if (artist->hasThumb())
-+      pItem->SetArt("thumb", artist->getThumb()->getPath());
++      pItem->SetArt("thumb",artist->getThumb()->getPath());
 +
 +    pItem->SetIconImage("DefaultArtist.png");
-+    pItem->SetArt("fanart", *artist->getFanart());
++    pItem->SetProperty("fanart_image", *artist->getFanart());
 +    pItem->SetProperty("artist_description", artist->getBio());
 +
 +    return pItem;
@@ -15713,7 +16741,7 @@ index 0000000..fcc1390
 +   void Utils::updateSearchResults(string query) {
 +     //we need to replace the whitespaces with %20
 +
-+     int pos = 0;
++     unsigned int pos = 0;
 +     while (pos != string::npos) {
 +       pos = query.find(' ');
 +       if (pos != string::npos) {
@@ -17035,15 +18063,15 @@ index 0000000..ca67874
 +
 +} /* namespace addon_music_spotify */
 +#endif /* SXARTIST_H_ */
-diff --git a/xbmc/music/spotyXBMC/player/Codec.cpp b/xbmc/music/spotyXBMC/player/Codec.cpp
+diff --git a/xbmc/music/spotyXBMC/player/ISpotifyPlayer.cpp b/xbmc/music/spotyXBMC/player/ISpotifyPlayer.cpp
 new file mode 100644
-index 0000000..8ce9a29
+index 0000000..3a49fbc
 --- /dev/null
-+++ b/xbmc/music/spotyXBMC/player/Codec.cpp
-@@ -0,0 +1,241 @@
++++ b/xbmc/music/spotyXBMC/player/ISpotifyPlayer.cpp
+@@ -0,0 +1,27 @@
 +/*
 + spotyxbmc2 - A project to integrate Spotify into XBMC
-+ Copyright (C) 2011  David Erenger
++ Copyright (C) 2013  Samuel Cabrero <samuelcabrero@gmail.com>
 +
 + This program is free software: you can redistribute it and/or modify
 + it under the terms of the GNU General Public License as published by
@@ -17057,240 +18085,28 @@ index 0000000..8ce9a29
 +
 + You should have received a copy of the GNU General Public License
 + along with this program.  If not, see <http://www.gnu.org/licenses/>.
-+
-+ For contact with the author:
-+ david.erenger@gmail.com
 + */
 +
-+#include "../session/Session.h"
-+#include "Codec.h"
-+#include "Util.h"
-+#include "utils/URIUtils.h"
-+#include <stdint.h>
-+#include "PlayerHandler.h"
-+#include "../radio/RadioHandler.h"
-+#include "../SxSettings.h"
-+#include "../../PlayListPlayer.h"
-+#include "../../../playlists/PlayList.h"
-+
-+using namespace std;
-+using namespace PLAYLIST;
++#include "ISpotifyPlayer.h"
 +
 +namespace addon_music_spotify {
-+
-+  Codec::Codec() {
-+    m_SampleRate = 44100;
-+    m_Channels = 2;
-+    m_BitsPerSample = 16;
-+    //the bitrate is hardcoded, we dont no it before first music delivery and then its to late, the skin has already printed it out
-+    m_Bitrate = Settings::getInstance()->useHighBitrate() ? 320000 : 160000;
-+    m_CodecName = "spotify";
-+	m_DataFormat = AE_FMT_S16NE;
-+    m_TotalTime = 0;
-+    m_currentTrack = 0;
-+    m_isPlayerLoaded = false;
-+    m_buffer = 0;
-+  }
-+
-+  Codec::~Codec() {
-+    DeInit();
-+    delete m_buffer;
-+  }
-+
-+  bool Codec::Init(const CStdString & strFile, unsigned int filecache) {
-+    m_bufferSize = 2048 * sizeof(int16_t) * 50;
-+    m_buffer = new char[m_bufferSize];
-+    CStdString uri = URIUtils::GetFileName(strFile);
-+    CStdString extension = uri.Right(uri.GetLength() - uri.Find('.') - 1);
-+    if (extension.Left(12) == "spotifyradio") {
-+      //if its a radiotrack the radionumber and tracknumber is secretly encoded at the end of the extension
-+      CStdString trackStr = extension.Right(
-+          extension.GetLength() - extension.ReverseFind('#') - 1);
-+      Logger::printOut(extension);
-+      CStdString radioNumber = extension.Left(uri.Find('#'));
-+      Logger::printOut(radioNumber);
-+      radioNumber = radioNumber.Right(
-+          radioNumber.GetLength() - radioNumber.Find('#') - 1);
-+      Logger::printOut("loading codec radio");
-+      RadioHandler::getInstance()->pushToTrack(atoi(radioNumber),
-+          atoi(trackStr));
-+    }
-+    //we have a non legit extension so remove it manually
-+    uri = uri.Left(uri.Find('.'));
-+
-+    Logger::printOut("trying to load track:");
-+    Logger::printOut(uri);
-+    sp_link *spLink = sp_link_create_from_string(uri);
-+    m_currentTrack = sp_link_as_track(spLink);
-+    sp_track_add_ref(m_currentTrack);
-+    sp_link_release(spLink);
-+    m_endOfTrack = false;
-+    m_bufferPos = 0;
-+    m_startStream = false;
-+    m_isPlayerLoaded = false;
-+    m_TotalTime = sp_track_duration(m_currentTrack);
-+
-+    //prefetch the next track!
-+
-+	  CPlayList& playlist = g_playlistPlayer.GetPlaylist(PLAYLIST_MUSIC);
-+	  int nextSong = g_playlistPlayer.GetNextSong();
-+
-+	  if (nextSong >= 0 && nextSong < playlist.size()){
-+	  	CFileItemPtr song = playlist[nextSong];
-+	  	if (song != NULL){
-+	  		CStdString uri = song->GetPath();
-+	  		if (uri.Left(7).Equals("spotify")){
-+	  			uri = uri.Left(uri.Find('.'));
-+	  	    Logger::printOut("prefetching track:");
-+	  	    Logger::printOut(uri);
-+	  	    sp_link *spLink = sp_link_create_from_string(uri);
-+	  	    sp_track* track = sp_link_as_track(spLink);
-+	  	    sp_session_player_prefetch(getSession(), track);
-+	  	    sp_link_release(spLink);
-+	  		}
-+	  	}
-+	  }
-+
-+    return true;
-+  }
-+
-+  void Codec::DeInit() {
-+    unloadPlayer();
-+    PlayerHandler::getInstance()->removeCodec();
-+  }
-+
-+  int64_t Codec::Seek(int64_t iSeekTime) {
-+    Logger::printOut("trying to seek");
-+    sp_session_player_seek(getSession(), iSeekTime);
-+    m_bufferPos = 0;
-+    return iSeekTime;
-+  }
-+
-+  int Codec::ReadPCM(BYTE *pBuffer, int size, int *actualsize) {
-+    *actualsize = 0;
-+    if (!m_isPlayerLoaded)
-+      loadPlayer();
-+
-+    if (m_startStream) {
-+      if (m_endOfTrack && m_bufferPos == 0) {
-+        return READ_EOF;
-+      } else if (m_bufferPos > 0) {
-+        int amountToMove = m_bufferPos;
-+        if (m_bufferPos > size)
-+          amountToMove = size;
-+        memcpy(pBuffer, m_buffer, amountToMove);
-+        memmove(m_buffer, m_buffer + amountToMove, m_bufferSize - amountToMove);
-+        m_bufferPos -= amountToMove;
-+        *actualsize = amountToMove;
-+      }
-+    }
-+    return READ_SUCCESS;
-+  }
-+
-+  bool Codec::CanInit() {
-+    return true;
-+  }
-+
-+  void Codec::endOfTrack() {
-+    m_endOfTrack = true;
-+  }
-+
-+  bool Codec::loadPlayer() {
-+    Logger::printOut("load player");
-+    if (!m_isPlayerLoaded) {
-+      //do we have a track at all?
-+      if (m_currentTrack) {
-+        CStdString name;
-+        Logger::printOut("load player 2");
-+        if (sp_track_is_loaded(m_currentTrack)) {
-+          sp_error error = sp_session_player_load(getSession(), m_currentTrack);
-+          CStdString message;
-+          Logger::printOut("load player 3");
-+          message.Format("%s", sp_error_message(error));
-+          Logger::printOut(message);
-+          Logger::printOut("load player 4");
-+          if (SP_ERROR_OK == error) {
-+            sp_session_player_play(getSession(), true);
-+            m_isPlayerLoaded = true;
-+            Logger::printOut("load player 5");
-+            return true;
-+          }
-+        }
-+      } else
-+        return false;
-+    }
-+    return true;
-+  }
-+
-+  bool Codec::unloadPlayer() {
-+    //make sure there is no music_delivery while we are removing the codec
-+    while (!Session::getInstance()->lock()) {
-+    }
-+    if (m_isPlayerLoaded) {
-+      sp_session_player_play(getSession(), false);
-+      sp_session_player_unload(getSession());
-+      if (m_currentTrack != NULL) {
-+        sp_track_release(m_currentTrack);
-+      }
-+    }
-+
-+    m_currentTrack = NULL;
-+    m_isPlayerLoaded = false;
-+    m_endOfTrack = true;
-+    Session::getInstance()->unlock();
-+    return true;
-+  }
-+
-+  int Codec::musicDelivery(int channels, int sample_rate, const void *frames,
-+      int num_frames) {
-+    //Logger::printOut("music delivery");
-+    int amountToMove = num_frames * (int) sizeof(int16_t) * channels;
-+
-+    if ((m_bufferPos + amountToMove) >= m_bufferSize) {
-+      amountToMove = m_bufferSize - m_bufferPos;
-+    }
-+
-+    memcpy(m_buffer + m_bufferPos, frames, amountToMove);
-+    m_bufferPos += amountToMove;
-+
-+    if (!m_startStream && m_bufferPos == m_bufferSize) {
-+      //now the buffer is full, start playing
-+      m_startStream = true;
-+    }
-+
-+    return amountToMove / ((int) sizeof(int16_t) * channels);
-+  }
-+
-+  sp_session* Codec::getSession() {
-+    return Session::getInstance()->getSpSession();
-+  }
-+
-+  CAEChannelInfo Codec::GetChannelInfo()
-+  {
-+    static enum AEChannel map[2][3] = {
-+      {AE_CH_FC, AE_CH_NULL},
-+      {AE_CH_FL, AE_CH_FR  , AE_CH_NULL}
-+    };
-+
-+    if (m_Channels > 2) {
-+	  Logger::printOut("m_Channels is bigger than 2, please fix code, I can´t return a valid AEChannel map");
-+//    return CAEUtil::GuessChLayout(m_Channels);
-+    }
-+
-+  return CAEChannelInfo(map[m_Channels - 1]);
-+  }
++ISpotifyPlayer::ISpotifyPlayer() {
 +}
 +
-+/* namespace addon_music_spotify */
-diff --git a/xbmc/music/spotyXBMC/player/Codec.h b/xbmc/music/spotyXBMC/player/Codec.h
++ISpotifyPlayer::~ISpotifyPlayer() {
++}
++}
+diff --git a/xbmc/music/spotyXBMC/player/ISpotifyPlayer.h b/xbmc/music/spotyXBMC/player/ISpotifyPlayer.h
 new file mode 100644
-index 0000000..09a32d4
+index 0000000..5118e22
 --- /dev/null
-+++ b/xbmc/music/spotyXBMC/player/Codec.h
-@@ -0,0 +1,63 @@
++++ b/xbmc/music/spotyXBMC/player/ISpotifyPlayer.h
+@@ -0,0 +1,33 @@
++#pragma once
++
 +/*
 + spotyxbmc2 - A project to integrate Spotify into XBMC
-+ Copyright (C) 2011  David Erenger
++ Copyright (C) 2013  Samuel Cabrero <samuelcabrero@gmail.com>
 +
 + This program is free software: you can redistribute it and/or modify
 + it under the terms of the GNU General Public License as published by
@@ -17304,62 +18120,31 @@ index 0000000..09a32d4
 +
 + You should have received a copy of the GNU General Public License
 + along with this program.  If not, see <http://www.gnu.org/licenses/>.
-+
-+ For contact with the author:
-+ david.erenger@gmail.com
 + */
 +
-+#ifndef CODEC_H_
-+#define CODEC_H_
-+#include "../../../cores/paplayer/CachingCodec.h"
 +#include <libspotify/api.h>
 +
 +namespace addon_music_spotify {
++class ISpotifyPlayer {
++public:
++	ISpotifyPlayer();
++	virtual ~ISpotifyPlayer();
 +
-+  class Codec: public CachingCodec {
-+  public:
-+    Codec();
-+    virtual ~Codec();
-+    virtual bool Init(const CStdString &strFile, unsigned int filecache);
-+    virtual void DeInit();
-+    virtual bool CanSeek() {
-+      return true;
-+    }
-+    virtual int64_t Seek(int64_t iSeekTime);
-+    virtual int ReadPCM(BYTE *pBuffer, int size, int *actualsize);
-+    virtual bool CanInit();
-+	virtual CAEChannelInfo GetChannelInfo();
-+
-+    int musicDelivery(int channels, int sample_rate, const void *frames, int num_frames);
-+    void endOfTrack();
-+
-+    friend class PlayerHandler;
-+
-+  private:
-+
-+    bool loadPlayer();
-+    bool unloadPlayer();
-+    sp_session * getSession();
-+    sp_track *m_currentTrack;
-+    bool m_startStream;
-+    bool m_isPlayerLoaded;
-+    bool m_endOfTrack;
-+    int m_bufferSize;
-+    char *m_buffer;
-+    int m_bufferPos;
-+  };
-+
-+} /* namespace addon_music_spotify */
-+#endif /* CODEC_H_ */
++	virtual int sp_musicDelivery(const sp_audioformat *format,
++			const void *frames, int num_frames)=0;
++	virtual void sp_endOfTrack()=0;
++};
++}
 diff --git a/xbmc/music/spotyXBMC/player/PlayerHandler.cpp b/xbmc/music/spotyXBMC/player/PlayerHandler.cpp
 new file mode 100644
-index 0000000..a23f7c8
+index 0000000..6ae7259
 --- /dev/null
 +++ b/xbmc/music/spotyXBMC/player/PlayerHandler.cpp
-@@ -0,0 +1,81 @@
+@@ -0,0 +1,78 @@
 +/*
 + spotyxbmc2 - A project to integrate Spotify into XBMC
 + Copyright (C) 2011  David Erenger
++               2013  Samuel Cabrero <samuelcabrero@gmail.com>
 +
 + This program is free software: you can redistribute it and/or modify
 + it under the terms of the GNU General Public License as published by
@@ -17379,74 +18164,71 @@ index 0000000..a23f7c8
 + */
 +
 +#include "PlayerHandler.h"
-+#include "Codec.h"
++#include "ISpotifyPlayer.h"
 +#include "../session/Session.h"
 +
 +namespace addon_music_spotify {
 +
-+  PlayerHandler::PlayerHandler() {
-+    m_currentCodec = NULL;
-+    m_preloadingCodec = NULL;
-+  }
-+
-+  PlayerHandler* PlayerHandler::m_instance = 0;
-+  PlayerHandler *PlayerHandler::getInstance() {
-+    return m_instance ? m_instance : (m_instance = new PlayerHandler);
-+  }
-+
-+  void PlayerHandler::deInit() {
-+    if (m_instance == NULL)
-+      return;
-+    if (m_instance->m_currentCodec != NULL)
-+      m_instance->m_currentCodec->unloadPlayer();
-+    //The codec is probably deleted by xbmc on exit
-+    //  delete m_currentCodec();
-+  }
-+
-+  Codec *PlayerHandler::getCodec() {
-+    //do some checks if it is a spotify track and if its loaded and so on
-+    if (m_currentCodec == NULL) {
-+      //start with a init flag
-+      m_currentCodec = new Codec();
-+      return m_currentCodec;
-+    }
-+    return NULL;
-+    //}
-+    //if there is an other preloading track, remove it
-+    //if (m_preloadingCodec)
-+    //  delete m_preloadingCodec;
-+    //start with a preload flag
-+    //m_preloadingCodec = new Codec();
-+    //return m_preloadingCodec;
-+  }
-+
-+  PlayerHandler::~PlayerHandler() {
-+  }
-+
-+  void PlayerHandler::removeCodec() {
-+    m_currentCodec = NULL;
-+  }
-+
-+  int PlayerHandler::cb_musicDelivery(sp_session *session,
-+      const sp_audioformat *format, const void *frames, int num_frames) {
-+    return m_instance->getCurrentCodec()->musicDelivery(format->channels,
-+        format->sample_rate, frames, num_frames);
-+  }
-+
-+  void PlayerHandler::cb_endOfTrack(sp_session *session) {
-+    m_instance->getCurrentCodec()->endOfTrack();
-+  }
++PlayerHandler* PlayerHandler::m_instance = 0;
++ISpotifyPlayer* PlayerHandler::m_player = 0;
++PlayerHandler *PlayerHandler::getInstance() {
++	return m_instance ? m_instance : (m_instance = new PlayerHandler());
 +}
-+/* namespace addon_music_spotify */
++ISpotifyPlayer* PlayerHandler::getPlayer() {
++	return m_player;
++}
++
++PlayerHandler::PlayerHandler() {
++	m_instance = 0;
++}
++
++PlayerHandler::~PlayerHandler() {
++	if (!m_instance)
++		return;
++	m_instance->detachPlayer(m_player);
++}
++
++void PlayerHandler::deInit() {
++	if (!m_instance)
++		return;
++	m_instance->detachPlayer(m_player);
++}
++
++int PlayerHandler::cb_musicDelivery(sp_session *session,
++		const sp_audioformat *format, const void *frames, int num_frames) {
++	if (m_instance) {
++		ISpotifyPlayer *player = m_instance->getPlayer();
++		if (player)
++			return player->sp_musicDelivery(format, frames, num_frames);
++	}
++	return 0;
++}
++
++void PlayerHandler::cb_endOfTrack(sp_session *session) {
++	if (m_instance) {
++		ISpotifyPlayer *player = m_instance->getPlayer();
++		if (player)
++			player->sp_endOfTrack();
++	}
++}
++
++void PlayerHandler::attachPlayer(ISpotifyPlayer *player) {
++	m_player = player;
++}
++void PlayerHandler::detachPlayer(ISpotifyPlayer *player) {
++	m_player = 0;
++}
++}/* namespace addon_music_spotify */
 diff --git a/xbmc/music/spotyXBMC/player/PlayerHandler.h b/xbmc/music/spotyXBMC/player/PlayerHandler.h
 new file mode 100644
-index 0000000..d29a0cb
+index 0000000..c363da6
 --- /dev/null
 +++ b/xbmc/music/spotyXBMC/player/PlayerHandler.h
-@@ -0,0 +1,60 @@
+@@ -0,0 +1,53 @@
 +/*
 + spotyxbmc2 - A project to integrate Spotify into XBMC
 + Copyright (C) 2011  David Erenger
++               2013  Samuel Cabrero <samuelcabrero@gmail.com>
 +
 + This program is free software: you can redistribute it and/or modify
 + it under the terms of the GNU General Public License as published by
@@ -17468,39 +18250,31 @@ index 0000000..d29a0cb
 +#ifndef PLAYERHANDLER_H_
 +#define PLAYERHANDLER_H_
 +
-+#include <string>
 +#include <libspotify/api.h>
 +
 +using namespace std;
 +
 +namespace addon_music_spotify {
 +
-+  class Codec;
-+  class PlayerHandler {
-+  public:
++class ISpotifyPlayer;
++class PlayerHandler {
++public:
++	static PlayerHandler *getInstance();
++	static void deInit();
 +
-+    static PlayerHandler *getInstance();
-+    static void deInit();
++	void attachPlayer(ISpotifyPlayer *player);
++	void detachPlayer(ISpotifyPlayer *player);
++	static ISpotifyPlayer *getPlayer();
 +
-+    void removeCodec();
++	static int SP_CALLCONV cb_musicDelivery(sp_session *session,
++			const sp_audioformat *format, const void *frames, int num_frames);static void SP_CALLCONV cb_endOfTrack(sp_session *session);
 +
-+    Codec* getCodec();
-+    Codec* getCurrentCodec() {
-+      return m_currentCodec;
-+    }
-+
-+    static int SP_CALLCONV cb_musicDelivery(sp_session *session, const sp_audioformat *format, const void *frames, int num_frames);
-+    static void SP_CALLCONV cb_endOfTrack(sp_session *session);
-+
-+  private:
-+    PlayerHandler();
-+    virtual ~PlayerHandler();
-+    static PlayerHandler *m_instance;
-+
-+    Codec* m_currentCodec;
-+    Codec* m_preloadingCodec;
-+
-+  };
++private:
++	PlayerHandler();
++	virtual ~PlayerHandler();
++	static PlayerHandler *m_instance;
++	static ISpotifyPlayer *m_player;
++};
 +
 +} /* namespace addon_music_spotify */
 +#endif /* PLAYERHANDLER_H_ */
@@ -21426,7 +22200,7 @@ index 0000000..eabb6ae
 +} /* namespace addon_music_spotify */
 +#endif /* ALBUMSTORE_H_ */
 diff --git a/xbmc/music/windows/GUIWindowMusicBase.cpp b/xbmc/music/windows/GUIWindowMusicBase.cpp
-index 2e7a2e9..c9e2bb8 100644
+index 2ee3313..b0ef15b 100644
 --- a/xbmc/music/windows/GUIWindowMusicBase.cpp
 +++ b/xbmc/music/windows/GUIWindowMusicBase.cpp
 @@ -18,6 +18,9 @@
@@ -21439,7 +22213,7 @@ index 2e7a2e9..c9e2bb8 100644
  #include "threads/SystemClock.h"
  #include "system.h"
  #include "GUIUserMessages.h"
-@@ -1322,6 +1325,11 @@ bool CGUIWindowMusicBase::GetDirectory(const CStdString &strDirectory, CFileItem
+@@ -1333,6 +1336,11 @@ bool CGUIWindowMusicBase::GetDirectory(const CStdString &strDirectory, CFileItem
    // add in the "New Playlist" item if we're in the playlists folder
    if ((items.GetPath() == "special://musicplaylists/") && !items.Contains("newplaylist://"))
    {
@@ -21452,7 +22226,7 @@ index 2e7a2e9..c9e2bb8 100644
      newPlaylist->SetLabel(g_localizeStrings.Get(16035));
      newPlaylist->SetLabelPreformated(true);
 diff --git a/xbmc/music/windows/GUIWindowMusicNav.cpp b/xbmc/music/windows/GUIWindowMusicNav.cpp
-index 88c5514..efa64f3 100644
+index cd8dfd8..39576d0 100644
 --- a/xbmc/music/windows/GUIWindowMusicNav.cpp
 +++ b/xbmc/music/windows/GUIWindowMusicNav.cpp
 @@ -18,6 +18,9 @@
@@ -21520,7 +22294,7 @@ index 88c5514..efa64f3 100644
      }
  
      // enable query all artist button only in album view
-@@ -554,6 +567,41 @@ bool CGUIWindowMusicNav::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
+@@ -557,6 +570,41 @@ bool CGUIWindowMusicNav::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
  
    switch (button)
    {
@@ -21563,7 +22337,7 @@ index 88c5514..efa64f3 100644
      {
        if (!item->IsVideoDb())
 diff --git a/xbmc/settings/Settings.cpp b/xbmc/settings/Settings.cpp
-index 79722aa..8ae344b 100644
+index 8a430ad..75ed790 100644
 --- a/xbmc/settings/Settings.cpp
 +++ b/xbmc/settings/Settings.cpp
 @@ -99,7 +99,7 @@ void CSettings::Initialize()
@@ -21576,5 +22350,5 @@ index 79722aa..8ae344b 100644
    m_discStubExtensions = ".disc";
    // internal music extensions
 -- 
-1.7.11.msysgit.1
+1.7.10.4
 

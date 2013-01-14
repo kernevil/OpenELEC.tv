@@ -54,7 +54,8 @@ else
   cd $HOME/patchcreate_xbmc_source
 
   # Add spotyxbmc2 remote repository to our local repository:
-  git remote add spotyxbmc2 git://github.com/akezeke/spotyxbmc2.git
+  #git remote add spotyxbmc2 git://github.com/akezeke/spotyxbmc2.git
+  git remote add spotyxbmc2 git://github.com/kernevil/spotyxbmc2.git
 fi
 
 # Update with the latest source code from the remote spotyxbmc2 repository.
