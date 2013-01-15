@@ -125,7 +125,7 @@ set_ip_address() {
   (
     local log_file="/var/log/${PROFILE_NAME}.log"
 
-    for i in $(seq 1 60); do
+    for i in $(seq 1 90); do
       echo "--- $i $PROFILE_NAME ------------" >>$log_file 2>&1
       dbus-send --system --dest=net.connman --print-reply /net/connman/service/${PROFILE_NAME} net.connman.Service.Connect >>$log_file 2>&1
       usleep 500000
